@@ -1,0 +1,7 @@
+/node_modules/
+/conf/config-local.js
+.env
+/dist/
+/.idea
+.history
+.DS_Store

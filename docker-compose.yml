@@ -1,0 +1,31 @@
+version: '3'
+services:
+  co-recipe:
+    build: .
+    container_name: co-recipe
+    volumes:
+      - .:/home/app
+    external_links:
+      - actionmedia
+    ports:
+      - 3001:3001
+    environment:
+      - BRANCH=dev
+      - VIRTUAL_HOST=co-recipe-local.jatun.systems
+    networks:
+      - proxy
+      - database
+    depends_on:
+      - redis
+
+  redis:
+    image: redis:latest
+
+networks:
+  database:
+    external: true
+  proxy:
+    external: true
+  default:
+    external:
+      name: actionmedia-network
