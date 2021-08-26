@@ -15,8 +15,8 @@
     Co-recipe handle this record and send by socket to co-traffic with new data
 
 ## Docker setup
-	docker build -t recipeOffers .
-   	docker run -it -p 3001:3001 --rm --name recipeOffers-  recipeOffers
+	docker build -t co-recipe .
+   	docker run -it -p 3001:3001 --rm --name co-recipe-  co-recipe
 
 ## run
     create folder /tmp/co-recipe on local env

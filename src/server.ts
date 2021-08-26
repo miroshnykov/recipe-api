@@ -10,6 +10,7 @@ import {redis} from "./redis";
 import {setCampaignsRecipe} from "./crons/campaignsRecipe";
 import {setFileSizeCampaigns} from "./crons/campaignsFileSize";
 import {encrypt, decrypt, getLocalFiles, getFileSize} from "./utils"
+import {getOffer, getOfferCaps} from "./models/offersModel";
 
 const app: Application = express();
 const httpServer = createServer(app);
@@ -92,6 +93,20 @@ app.get('/fileSizeInfoRedis', async (req: Request, res: Response) => {
     res.json({
       fileSizeCampaignsRecipe,
       fileSizeOffersRecipe
+    })
+  } catch (e) {
+    res.json({err: e})
+  }
+
+})
+
+app.get('/caps', async (req: Request, res: Response) => {
+  try {
+    let caps = await getOfferCaps(19)
+    // let offer = await getOffer(19)
+    res.json({
+      // offer,
+      caps
     })
   } catch (e) {
     res.json({err: e})
