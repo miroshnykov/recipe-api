@@ -3,13 +3,30 @@ import consola from "consola";
 import fileSystem from "fs";
 import {uploadOffersFileToS3Bucket} from "./offersRecipeSendToS3";
 import {compressFile, deleteFile} from "../utils";
-import {getOffers} from "../models/offersModel";
+import {getOffers, getAggregatedOffers, getOfferCaps} from "../models/offersModel";
 import {setFileSizeOffers} from "./offersFileSize";
 
 export const setOffersRecipe = async () => {
 
   try {
-    let offers = await getOffers()
+    let offers:object|any = await getOffers()
+
+    let offerFormat:any = []
+    for (const offer of offers) {
+      if (offer.type === 'aggregated') {
+        offer.offersAggregatedIds = await getAggregatedOffers(offer.offerId)
+        offerFormat.push(offer)
+        continue
+      }
+
+      if (offer.capOfferId || offer.useStartEndDate) {
+        let offerWitCaps = await getOfferCaps(offer.offerId)
+        offerFormat.push(offerWitCaps)
+      } else {
+        offerFormat.push(offer)
+      }
+
+    }
 
     const filePath: string | undefined = process.env.OFFERS_RECIPE_PATH
 
@@ -18,7 +35,7 @@ export const setOffersRecipe = async () => {
 
     transformStream.pipe(outputStream);
 
-    offers?.forEach(transformStream.write);
+    offerFormat?.forEach(transformStream.write);
 
     transformStream.end();
 
@@ -28,7 +45,7 @@ export const setOffersRecipe = async () => {
 
         await compressFile(filePath!)
         await deleteFile(filePath!)
-        consola.success(`File Offers(count:${offers?.length}) created path:${filePath} `)
+        consola.success(`File Offers(count:${offerFormat?.length}) created path:${filePath} `)
       }
     )
     setTimeout(uploadOffersFileToS3Bucket, 6000)
