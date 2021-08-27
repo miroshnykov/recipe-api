@@ -11,6 +11,7 @@ import {setCampaignsRecipe} from "./crons/campaignsRecipe";
 import {setFileSizeCampaigns} from "./crons/campaignsFileSize";
 import {encrypt, decrypt, getLocalFiles, getFileSize} from "./utils"
 import {getOffer, getOfferCaps} from "./models/offersModel";
+import {sqsProcess} from "./sqs";
 
 const app: Application = express();
 const httpServer = createServer(app);
@@ -144,8 +145,28 @@ io.on('connection', (socket: Socket) => {
       consola.error('fileSizeCampaignsCheckError:', e)
     }
   })
+  let updRedis: any = []
+
+  const sendUpdRedis = async () => {
+    try {
+      let messages = await sqsProcess()
+
+      if (!messages) return
+      for (const message of messages) {
+        // console.log(`send to socket ${socket.id} messageId:${message.id}, action:${message.action}, type:${message.type}`)
+        consola.info(`send to socket ${socket.id}, message:${JSON.stringify(message)}`)
+        io.sockets.emit("updRecipe", message)
+      }
+
+    } catch (e) {
+      consola.error('updRecipeError:', e)
+    }
+  }
+
+  updRedis[socket.id] = setInterval(sendUpdRedis, 10000) // 10 sec
 
   socket.on('disconnect', () => {
+    clearInterval(updRedis[socket.id])
     consola.warn(`client disconnected ID:${socket.id}`);
   })
 });
@@ -167,7 +188,6 @@ setInterval(setOffersRecipe, 60000) // 60000 -> 60 sec
 
 setTimeout(setCampaignsRecipe, 20000) // 20000 -> 20 sec
 setTimeout(setOffersRecipe, 20000) // 20000 -> 20 sec
-
 
 
 httpServer.listen(port, host, (): void => {
