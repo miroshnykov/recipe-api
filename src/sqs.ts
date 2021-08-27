@@ -16,7 +16,7 @@ AWS.config.update({
 
 let sqs = new AWS.SQS()
 
-const queueUrl:string = process.env.AWS_SQS_QUEUE_URL||''
+const queueUrl: string = process.env.AWS_SQS_QUEUE_URL || ''
 consola.info(`queueUrl:${queueUrl}`)
 export const sqsProcess = async () => {
 
@@ -37,6 +37,7 @@ export const sqsProcess = async () => {
           type: "offer",
           id: messageBody.id,
           action: "insert",
+          timestamp: Date.now(),
           body: `${JSON.stringify(offersCaps)}`
         }
         // console.log('generateOfferBody:', generateOfferBody)
@@ -49,6 +50,7 @@ export const sqsProcess = async () => {
           type: "campaign",
           id: messageBody.id,
           action: "insert",
+          timestamp: Date.now(),
           body: `${JSON.stringify(campaignInfo)}`
         }
         messages.push(generateCampaignBody)
@@ -56,10 +58,7 @@ export const sqsProcess = async () => {
         messages.push(messageBody)
       }
 
-      // if (param !== 'debug') {
-      //
-      //   await deleteMessage(message.ReceiptHandle!)
-      // }
+      await deleteMessage(message.ReceiptHandle!)
     }
     return messages
   } catch (e) {
@@ -84,7 +83,7 @@ const receiveMessage = async () => {
     })
 }
 
-const deleteMessage = async (messageId:string) => {
+const deleteMessage = async (messageId: string) => {
 
   let params = {
     QueueUrl: queueUrl,

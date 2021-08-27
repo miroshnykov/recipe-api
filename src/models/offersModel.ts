@@ -113,7 +113,7 @@ const caps = async (offerId: number) => {
     const [offerCaps]: [any[], FieldPacket[]] = await conn.query(capSql)
     await conn.end();
 
-    consola.info('offerCaps:', offerCaps[0])
+    // consola.info('offerCaps:', offerCaps[0])
 
     return offerCaps.length !== 0 ? offerCaps[0] : []
   } catch (e) {
