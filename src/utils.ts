@@ -87,7 +87,7 @@ export const deleteFile = (filePath: string) => {
 };
 
 
-export const getLocalFiles = (localFolder: string) => {
+export const getLocalFiles = (localFolder: string):Promise<string[]> => {
 
   return new Promise((resolve, reject) => {
     file.readdir(localFolder, (err, files: string[]) => {

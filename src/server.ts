@@ -20,6 +20,10 @@ const io = new Server(httpServer, {});
 const host: string = process.env.HOST || ''
 const port: number = Number(process.env.PORT || '3001')
 
+app.get('/health', (req: Request, res: Response) => {
+  res.json('Ok')
+})
+
 // http://localhost:3001/encodeUrl?offerId=1111&campaignId=22222
 app.get('/encodeUrl', async (req: Request, res: Response) => {
   try {
@@ -175,7 +179,7 @@ io.on('connect', async (socket: Socket) => {
   consola.success(`connect id`, socket.id)
 })
 
-if (process.env.ENV !== 'development') {
+ if (process.env.NODE_ENV !== 'development') {
   setInterval(setCampaignsRecipe, 60000) // 60000 -> 60 sec
   setInterval(setOffersRecipe, 60000) // 60000 -> 60 sec
 
@@ -187,7 +191,7 @@ setInterval(setCampaignsRecipe, 60000) // 60000 -> 60 sec
 setInterval(setOffersRecipe, 60000) // 60000 -> 60 sec
 
 setTimeout(setCampaignsRecipe, 20000) // 20000 -> 20 sec
-setTimeout(setOffersRecipe, 20000) // 20000 -> 20 sec
+setTimeout(setOffersRecipe, 6000) // 20000 -> 20 sec
 
 
 httpServer.listen(port, host, (): void => {
