@@ -50,11 +50,11 @@ export const getOffers = async () => {
     const [offers]: [any[], FieldPacket[]] = await conn.query(sql);
     await conn.end();
 
-    // console.log('Offers count:', offers.length)
+   // console.log('Offers count:', offers.length)
     return offers
 
   } catch (e) {
-    consola.error('setOffersToRedisError:', e)
+    consola.error('getOffersError:', e)
   }
 
 }
@@ -113,7 +113,7 @@ const caps = async (offerId: number) => {
     const [offerCaps]: [any[], FieldPacket[]] = await conn.query(capSql)
     await conn.end();
 
-    consola.info('offerCaps:', offerCaps[0])
+    // consola.info('offerCaps:', offerCaps[0])
 
     return offerCaps.length !== 0 ? offerCaps[0] : []
   } catch (e) {
