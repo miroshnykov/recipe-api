@@ -28,11 +28,15 @@ export const uploadOffersFileToS3Bucket = async () => {
         Key: s3Key,
         Body: data
       };
+      consola.info('uploadOffersFileToS3Bucket:', params)
+
       s3.upload(params, (err: Error, data: SendData) => {
         if (err) {
           consola.error(err);
+        } else {
+          consola.info(`File offers uploaded successfully at ${data.Location}`);
         }
-        consola.info(`File offers uploaded successfully at ${data.Location}`);
+
       });
     });
 
