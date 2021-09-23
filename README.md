@@ -34,14 +34,14 @@
     DB_USERNAME=
     DB_PASSWORD=
     DB_NAME=traffic
-    
+
     AWS_ACCESS_KEY_ID=
     AWS_SECRET_ACCESS_KEY=
     AWS_REGION=us-east-1
-    
+
     OFFERS_RECIPE_PATH=/tmp/co-recipe/offersRecipe.json
     CAMPAIGNS_RECIPE_PATH=/tmp/co-recipe/campaignsRecipe.json
-    
+
     S3_CAMPAIGNS_RECIPE_PATH=campaignsRecipe.json.gz
     S3_OFFERS_RECIPE_PATH=offersRecipe.json.gz
     S3_BUCKET_NAME=co-recipe-staging
@@ -52,5 +52,5 @@
     ENCRIPTION_IV_LENGTH=
 
 ## docker build
-	docker build -t co-recipe .
-   	docker run -it -p 3001:3001 --rm --name co-recipe-  co-recipe
+   docker build -t co-recipe .
+   docker run -it -p 3001:3001 --rm --name co-recipe-  co-recipe
