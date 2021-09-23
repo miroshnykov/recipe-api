@@ -54,4 +54,3 @@
 ## docker build
    docker build -t co-recipe .
    docker run -it -p 3001:3001 --rm --name co-recipe-  co-recipe
-
