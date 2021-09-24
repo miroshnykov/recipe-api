@@ -28,7 +28,7 @@ export const uploadOffersFileToS3Bucket = async () => {
         Key: s3Key,
         Body: data
       };
-      consola.info('uploadOffersFileToS3Bucket:', params)
+      // consola.info('uploadOffersFileToS3Bucket:', params)
 
       s3.upload(params, (err: Error, data: SendData) => {
         if (err) {

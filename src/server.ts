@@ -90,6 +90,7 @@ app.get('/files', async (req: Request, res: Response) => {
 })
 
 // http://localhost:3001/fileSizeInfoRedis
+// https://co-recipe.jatun.systems/fileSizeInfoRedis
 app.get('/fileSizeInfoRedis', async (req: Request, res: Response) => {
   try {
     let fileSizeCampaignsRecipe: string | null = await redis.get(`campaignsSize`)
@@ -179,19 +180,19 @@ io.on('connect', async (socket: Socket) => {
   consola.success(`connect id`, socket.id)
 })
 
- if (process.env.NODE_ENV !== 'development') {
-  setInterval(setCampaignsRecipe, 60000) // 60000 -> 60 sec
-  setInterval(setOffersRecipe, 60000) // 60000 -> 60 sec
+ // if (process.env.NODE_ENV !== 'development') {
+  // setInterval(setCampaignsRecipe, 60000) // 60000 -> 60 sec
+  // setInterval(setOffersRecipe, 60000) // 60000 -> 60 sec
 
   // setInterval(setFileSizeOffers, 20000)
   // setInterval(setFileSizeCampaigns, 20000)
-}
+// }
 
-setInterval(setCampaignsRecipe, 60000) // 60000 -> 60 sec
-setInterval(setOffersRecipe, 60000) // 60000 -> 60 sec
+setInterval(setCampaignsRecipe, 300000) // 300000 -> 5 min
+setInterval(setOffersRecipe, 300000) // 300000 -> 5 min
 
 setTimeout(setCampaignsRecipe, 20000) // 20000 -> 20 sec
-setTimeout(setOffersRecipe, 6000) // 20000 -> 20 sec
+setTimeout(setOffersRecipe, 30000) // 20000 -> 20 sec
 
 
 httpServer.listen(port, host, (): void => {

@@ -12,9 +12,9 @@ AWS.config.update({
   secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
   region: process.env.AWS_REGION
 });
-consola.info('AWS_ACCESS_KEY_ID:',process.env.AWS_ACCESS_KEY_ID)
-consola.info('AWS_SECRET_ACCESS_KEY:',process.env.AWS_SECRET_ACCESS_KEY)
-consola.info('AWS_REGION:',process.env.AWS_REGION)
+// consola.info('AWS_ACCESS_KEY_ID:',process.env.AWS_ACCESS_KEY_ID)
+// consola.info('AWS_SECRET_ACCESS_KEY:',process.env.AWS_SECRET_ACCESS_KEY)
+// consola.info('AWS_REGION:',process.env.AWS_REGION)
 const s3 = new AWS.S3();
 const tempFileName:string = process.env.CAMPAIGNS_RECIPE_PATH + '.gz' || ''
 export const uploadCampaignsFileToS3Bucket = async () => {
