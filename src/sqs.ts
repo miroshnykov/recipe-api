@@ -17,7 +17,7 @@ AWS.config.update({
 let sqs = new AWS.SQS()
 
 const queueUrl: string = process.env.AWS_SQS_QUEUE_URL || ''
-consola.info(`queueUrl:${queueUrl}`)
+// consola.info(`queueUrl:${queueUrl}`)
 export const sqsProcess = async () => {
 
   try {
