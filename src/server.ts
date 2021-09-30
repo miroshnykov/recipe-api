@@ -71,6 +71,7 @@ app.get('/decodeUrl', async (req: Request, res: Response) => {
 })
 
 // http://localhost:3001/files
+// https://co-recipe.jatun.systems/files
 app.get('/files', async (req: Request, res: Response) => {
   try {
     let files = await getLocalFiles('/tmp/co-recipe')
@@ -127,8 +128,7 @@ io.on('connection', (socket: Socket) => {
       // consola.info(`Get size from engine:${fileSizeOffersCheck}`)
       let fileSizeOffersRecipe: number = Number(await redis.get(`offersSize`))
       if (fileSizeOffersCheck !== fileSizeOffersRecipe) {
-        consola.warn(`fileSize is different `)
-        consola.info(`fileSizeOffersCheck:${fileSizeOffersCheck}, fileSizeOffersRecipe:${fileSizeOffersRecipe}`)
+        consola.warn(`fileSize offer is different, fileSizeOffersCheck:${fileSizeOffersCheck}, fileSizeOffersRecipe:${fileSizeOffersRecipe} `)
         io.to(socket.id).emit("fileSizeOffersCheck", fileSizeOffersCheck)
       }
 
@@ -141,8 +141,7 @@ io.on('connection', (socket: Socket) => {
     try {
       let fileSizeCampaignsRecipe: number = Number(await redis.get(`campaignsSize`))
       if (fileSizeCampaignsCheck !== fileSizeCampaignsRecipe) {
-        consola.warn(`fileSize campaigns  is different `)
-        consola.info(`fileSizeCampaignsCheck:${fileSizeCampaignsCheck}, fileSizeCampaignsRecipe:${fileSizeCampaignsRecipe}`)
+        consola.warn(`fileSize campaigns is different, fileSizeCampaignsCheck:${fileSizeCampaignsCheck}, fileSizeCampaignsRecipe:${fileSizeCampaignsRecipe} `)
         io.to(socket.id).emit("fileSizeCampaignsCheck", fileSizeCampaignsCheck)
       }
 
@@ -180,20 +179,11 @@ io.on('connect', async (socket: Socket) => {
   consola.success(`connect id`, socket.id)
 })
 
- // if (process.env.NODE_ENV !== 'development') {
-  // setInterval(setCampaignsRecipe, 60000) // 60000 -> 60 sec
-  // setInterval(setOffersRecipe, 60000) // 60000 -> 60 sec
-
-  // setInterval(setFileSizeOffers, 20000)
-  // setInterval(setFileSizeCampaigns, 20000)
-// }
-
 setInterval(setCampaignsRecipe, 300000) // 300000 -> 5 min
 setInterval(setOffersRecipe, 300000) // 300000 -> 5 min
 
 setTimeout(setCampaignsRecipe, 20000) // 20000 -> 20 sec
-setTimeout(setOffersRecipe, 30000) // 20000 -> 20 sec
-
+setTimeout(setOffersRecipe, 10000) // 20000 -> 20 sec
 
 httpServer.listen(port, host, (): void => {
   consola.success(`server is running on http://${host}:${port}`)
