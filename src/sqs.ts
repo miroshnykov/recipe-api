@@ -33,7 +33,7 @@ export const sqsProcess = async () => {
       if (messageBody.type === 'offer' && messageBody.action === 'updateOrCreate') {
         let offersCaps = await getOfferCaps(messageBody.id)
         let generateOfferBody = {
-          comments: "offer handling updateOrCreate",
+          comments: messageBody.comments,
           type: "offer",
           id: messageBody.id,
           action:  messageBody.action,
@@ -46,7 +46,7 @@ export const sqsProcess = async () => {
       } else if (messageBody.type === 'campaign' && messageBody.action === 'updateOrCreate') {
         let campaignInfo = await getCampaign(messageBody.id)
         let generateCampaignBody = {
-          comments: "ex# campaign handling updateOrCreate",
+          comments: messageBody.comments,
           type: "campaign",
           id: messageBody.id,
           action: messageBody.action,
