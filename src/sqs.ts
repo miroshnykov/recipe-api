@@ -92,7 +92,7 @@ const deleteMessage = async (messageId: string) => {
   return sqs.deleteMessage(params)
     .promise()
     .then(data => {
-      consola.info(' \n Successfully deleted message with ReceiptHandle', data)
+      // consola.info(' \n Successfully deleted message with ReceiptHandle', data)
       return data
     })
     .catch(err => {
