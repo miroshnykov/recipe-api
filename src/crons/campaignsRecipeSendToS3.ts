@@ -7,6 +7,8 @@ import * as dotenv from "dotenv";
 
 dotenv.config();
 
+import {influxdb} from "../metrics";
+
 AWS.config.update({
   accessKeyId: process.env.AWS_ACCESS_KEY_ID,
   secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
@@ -34,11 +36,13 @@ export const uploadCampaignsFileToS3Bucket = async () => {
         if (err) {
           consola.error(err);
         }
+        influxdb(200, `recipe_campaigns_uploaded_to_s3`)
         consola.info(`File campaigns uploaded successfully at ${data.Location}`);
       });
     });
 
   } catch (error) {
+    influxdb(500, `recipe_campaigns_uploaded_to_s3_error`)
     console.error('s3 upload error:', error)
   } finally {
 

@@ -5,6 +5,7 @@ import {uploadOffersFileToS3Bucket} from "./offersRecipeSendToS3";
 import {compressFile, deleteFile} from "../utils";
 import {getOffers, getAggregatedOffers, getOfferCaps} from "../models/offersModel";
 import {setFileSizeOffers} from "./offersFileSize";
+import {influxdb} from "../metrics";
 
 export const setOffersRecipe = async () => {
 
@@ -45,6 +46,7 @@ export const setOffersRecipe = async () => {
 
         await compressFile(filePath!)
         await deleteFile(filePath!)
+        influxdb(200, `recipe_offers_created`)
         consola.success(`File Offers(count:${offerFormat?.length}) created path:${filePath} `)
       }
     )
@@ -52,6 +54,7 @@ export const setOffersRecipe = async () => {
     setTimeout(setFileSizeOffers, 10000)
 
   } catch (e) {
+    influxdb(500, `recipe_offers_create_error`)
     consola.error('create offers recipe Error:', e)
   }
 
