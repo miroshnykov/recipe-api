@@ -9,6 +9,7 @@ import {uploadCampaignsFileToS3Bucket} from "./campaignsRecipeSendToS3";
 import {setOffersRecipe} from "./offersRecipe";
 import {setFileSizeOffers} from "./offersFileSize";
 import {setFileSizeCampaigns} from "./campaignsFileSize";
+import {influxdb} from "../metrics";
 
 export const setCampaignsRecipe = async () => {
 
@@ -32,6 +33,7 @@ export const setCampaignsRecipe = async () => {
 
         await compressFile(filePath!)
         await deleteFile(filePath!)
+        influxdb(200, `recipe_campaigns_created`)
         consola.success(`File Campaigns (count:${campaigns?.length}) created path:${filePath} `)
       }
     )
@@ -39,6 +41,7 @@ export const setCampaignsRecipe = async () => {
     setTimeout(setFileSizeCampaigns, 20000)  // 20000 -> 2 sec
 
   } catch (e) {
+    influxdb(500, `recipe_campaigns_create_error`)
     consola.error('create campaign recipe Error:', e)
   }
 
