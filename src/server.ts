@@ -131,6 +131,7 @@ io.on('connection', (socket: Socket) => {
       let fileSizeOffersRecipe: number = Number(await redis.get(`offersSize`))
       if (fileSizeOffersCheck !== fileSizeOffersRecipe) {
         consola.warn(`fileSize offer is different, fileSizeOffersCheck:${fileSizeOffersCheck}, fileSizeOffersRecipe:${fileSizeOffersRecipe} `)
+        influxdb(200, `file_size_changed_offers`)
         io.to(socket.id).emit("fileSizeOffersCheck", fileSizeOffersCheck)
       }
 
@@ -145,6 +146,7 @@ io.on('connection', (socket: Socket) => {
       let fileSizeCampaignsRecipe: number = Number(await redis.get(`campaignsSize`))
       if (fileSizeCampaignsCheck !== fileSizeCampaignsRecipe) {
         consola.warn(`fileSize campaigns is different, fileSizeCampaignsCheck:${fileSizeCampaignsCheck}, fileSizeCampaignsRecipe:${fileSizeCampaignsRecipe} `)
+        influxdb(200, `file_size_changed_campaigns`)
         io.to(socket.id).emit("fileSizeCampaignsCheck", fileSizeCampaignsCheck)
       }
 
