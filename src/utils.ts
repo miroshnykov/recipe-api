@@ -33,7 +33,7 @@ export const decrypt = (text: string) => {
 export const getFileSize = async (filename: string) => {
   try {
     let stats = await fs.stat(filename)
-    return stats?.size | 0
+    return Number(stats?.size) | 0
   } catch (e) {
     consola.error('File Size:', e);
   }
@@ -87,7 +87,7 @@ export const deleteFile = (filePath: string) => {
 };
 
 
-export const getLocalFiles = (localFolder: string):Promise<string[]> => {
+export const getLocalFiles = (localFolder: string): Promise<string[]> => {
 
   return new Promise((resolve, reject) => {
     file.readdir(localFolder, (err, files: string[]) => {
