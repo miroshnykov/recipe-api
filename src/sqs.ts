@@ -37,7 +37,7 @@ export const sqsProcess = async () => {
           comments: messageBody.comments,
           type: "offer",
           id: messageBody.id,
-          action:  messageBody.action,
+          action: messageBody.action,
           timestamp: Date.now(),
           body: `${JSON.stringify(offersCaps)}`
         }
@@ -67,7 +67,7 @@ export const sqsProcess = async () => {
     return messages
   } catch (e) {
     influxdb(500, `sqs_receive_message_error`)
-    console.log('receiveMessageError:', e)
+    consola.error('receiveMessageError:', e)
   }
 
 }
@@ -85,7 +85,7 @@ const receiveMessage = async () => {
     })
     .catch(err => {
       influxdb(500, `sqs_receive_message_error`)
-      console.log("Error while fetching messages from the sqs queue", err)
+      consola.error("Error while fetching messages from the sqs queue", err)
     })
 }
 
@@ -103,7 +103,7 @@ const deleteMessage = async (messageId: string) => {
     })
     .catch(err => {
       influxdb(500, `sqs_delete_message_error`)
-      consola.info("\n Error while fetching messages from the sqs queue", err)
+      consola.error(`Error delete messages from the sqs queue:${queueUrl}`, err)
     })
 
 }
