@@ -5,6 +5,7 @@ import {getCampaign} from "./models/campaignsModel";
 
 import AWS from 'aws-sdk'
 import * as dotenv from "dotenv";
+import {influxdb} from "./metrics";
 
 dotenv.config();
 
@@ -42,6 +43,7 @@ export const sqsProcess = async () => {
         }
         // console.log('generateOfferBody:', generateOfferBody)
         // messages.push(JSON.parse(generateOfferBody))
+        influxdb(200, `sqs_offer_update_or_create`)
         messages.push(generateOfferBody)
       } else if (messageBody.type === 'campaign' && messageBody.action === 'updateOrCreate') {
         let campaignInfo = await getCampaign(messageBody.id)
@@ -53,8 +55,10 @@ export const sqsProcess = async () => {
           timestamp: Date.now(),
           body: `${JSON.stringify(campaignInfo)}`
         }
+        influxdb(200, `sqs_campaign_update_or_create`)
         messages.push(generateCampaignBody)
       } else {
+        influxdb(200, `sqs_offer_campaign_delete`)
         messages.push(messageBody)
       }
 
@@ -62,6 +66,7 @@ export const sqsProcess = async () => {
     }
     return messages
   } catch (e) {
+    influxdb(500, `sqs_receive_message_error`)
     console.log('receiveMessageError:', e)
   }
 
@@ -79,6 +84,7 @@ const receiveMessage = async () => {
       return data
     })
     .catch(err => {
+      influxdb(500, `sqs_receive_message_error`)
       console.log("Error while fetching messages from the sqs queue", err)
     })
 }
@@ -96,6 +102,7 @@ const deleteMessage = async (messageId: string) => {
       return data
     })
     .catch(err => {
+      influxdb(500, `sqs_delete_message_error`)
       consola.info("\n Error while fetching messages from the sqs queue", err)
     })
 

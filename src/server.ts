@@ -13,6 +13,8 @@ import {encrypt, decrypt, getLocalFiles, getFileSize} from "./utils"
 import {getOffer, getOfferCaps} from "./models/offersModel";
 import {sqsProcess} from "./sqs";
 
+import {influxdb} from "./metrics";
+
 const app: Application = express();
 const httpServer = createServer(app);
 
@@ -133,6 +135,7 @@ io.on('connection', (socket: Socket) => {
       }
 
     } catch (e) {
+      influxdb(500, `file_size_offers_check_error`)
       consola.error('fileSizeOffersCheckError:', e)
     }
   })
@@ -146,6 +149,7 @@ io.on('connection', (socket: Socket) => {
       }
 
     } catch (e) {
+      influxdb(500, `file_size_campaigns_check_error`)
       consola.error('fileSizeCampaignsCheckError:', e)
     }
   })
@@ -163,6 +167,7 @@ io.on('connection', (socket: Socket) => {
       }
 
     } catch (e) {
+      influxdb(500, `upd_recipe_error`)
       consola.error('updRecipeError:', e)
     }
   }
