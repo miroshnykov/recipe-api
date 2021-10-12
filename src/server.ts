@@ -96,8 +96,8 @@ app.get('/files', async (req: Request, res: Response) => {
 // https://co-recipe.jatun.systems/fileSizeInfoRedis
 app.get('/fileSizeInfoRedis', async (req: Request, res: Response) => {
   try {
-    let fileSizeCampaignsRecipe: string | null = await redis.get(`campaignsSize`)
-    let fileSizeOffersRecipe: string | null = await redis.get(`offersSize`)
+    let fileSizeCampaignsRecipe: number = Number(await redis.get(`campaignsSize`)) || 0
+    let fileSizeOffersRecipe: number = Number(await redis.get(`offersSize`)) || 0
 
     res.json({
       fileSizeCampaignsRecipe,
