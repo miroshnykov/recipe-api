@@ -81,11 +81,12 @@ const receiveMessage = async () => {
     WaitTimeSeconds: 20
   }).promise()
     .then(data => {
+      influxdb(200, `sqs_receive_message`)
       return data
     })
     .catch(err => {
       influxdb(500, `sqs_receive_message_error`)
-      consola.error("Error while fetching messages from the sqs queue", err)
+      consola.error(`Error while fetching messages from the sqs queue:${queueUrl}`, err)
     })
 }
 
