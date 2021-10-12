@@ -13,7 +13,7 @@ const project = (process.env.NODE_ENV === 'development' || process.env.NODE_ENV 
 const hostname = os.hostname()
 
 enum Interval {
-  INTERVAL_REQUEST = 2,
+  INTERVAL_REQUEST = 10,
   INTERVAL_SYSTEMS = 30000
 }
 
@@ -45,6 +45,7 @@ export const influxdb = (statusCode: number, route: string) => {
     .queue()
 
   if (clientInfluxdb.writeQueueLength >= Interval.INTERVAL_REQUEST) {
+    consola.success(`Send to Grafana, interval:${Interval.INTERVAL_REQUEST} `)
     clientInfluxdb.syncWrite()
       .catch((error: any) => {
         consola.error(error)
