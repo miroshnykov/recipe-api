@@ -81,7 +81,6 @@ const receiveMessage = async () => {
     WaitTimeSeconds: 20
   }).promise()
     .then(data => {
-      influxdb(200, `sqs_receive_message`)
       return data
     })
     .catch(err => {
