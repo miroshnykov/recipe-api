@@ -2,7 +2,7 @@ import JSONStream from "JSONStream";
 import consola from "consola";
 import fileSystem from "fs";
 import {checkSizeOfferFileFromS3Bucket, uploadOffersFileToS3Bucket} from "./offersRecipeSendToS3";
-import {compressFile, deleteFile} from "../utils";
+import {compressFile, deleteFile, memorySizeOfBite} from "../utils";
 import {getOffers, getAggregatedOffers, getOfferCaps} from "../models/offersModel";
 import {setFileSizeOffers} from "./offersFileSize";
 import {influxdb} from "../metrics";
@@ -12,6 +12,9 @@ export const setOffersRecipe = async () => {
   try {
     let offers: object | any = await getOffers()
 
+    let sizeOfOffersDB = memorySizeOfBite(offers)
+    consola.info(`setSizeOffersObject:${sizeOfOffersDB}`)
+    influxdb(200, `size_of_offers_db_${sizeOfOffersDB}`)
     let offerFormat: any = []
     for (const offer of offers) {
       if (offer.type === 'aggregated') {
