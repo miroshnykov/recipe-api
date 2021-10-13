@@ -8,12 +8,14 @@ dotenv.config();
 
 const campaignsFileRecipePath = process.env.CAMPAIGNS_RECIPE_PATH + '.gz'
 
-export const setFileSizeCampaigns = async () => {
+export const setFileSizeCampaigns = async (sizeOfCampaignsDB: number) => {
   try {
-    let campaignsSize: number = await getFileSize(campaignsFileRecipePath!) || 0
-    consola.info(`setCampaignsSizeFile:${campaignsSize}`)
-    influxdb(200, `recipe_size_campaigns_${campaignsSize}`)
-    await redis.set(`campaignsSize`, campaignsSize!)
+    // let campaignsSize: number = await getFileSize(campaignsFileRecipePath!) || 0
+    consola.info(`setCampaignsSizeFile:${sizeOfCampaignsDB}`)
+    // influxdb(200, `recipe_size_campaigns_${sizeOfCampaignsDB}`)
+    // await redis.set(`campaignsSize`, campaignsSize!)
+
+    await redis.set(`campaignsSize`, sizeOfCampaignsDB!)
   } catch (e) {
     consola.error('setFileSizeCampaigns:', e)
   }

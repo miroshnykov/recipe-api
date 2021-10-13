@@ -9,15 +9,17 @@ dotenv.config();
 
 const offersFileRecipePath = process.env.OFFERS_RECIPE_PATH + '.gz'
 
-export const setFileSizeOffers = async () => {
+export const setFileSizeOffers = async (sizeOfOffersDB:number) => {
   try {
-    let offersSize: number = await getFileSize(offersFileRecipePath!) || 0
-    let s3SizeOffer = await checkSizeOfferFileFromS3Bucket()
-    consola.info(`setOffersSizeFile:${offersSize}`)
-    consola.info(`setOffersSizeBucket:${s3SizeOffer}`)
-    influxdb(200, `recipe_size_offers_${offersSize}`)
-    influxdb(200, `recipe_size_offers_bucket_${s3SizeOffer}`)
-    await redis.set(`offersSize`, offersSize!)
+    // let offersSize: number = await getFileSize(offersFileRecipePath!) || 0
+    // let s3SizeOffer = await checkSizeOfferFileFromS3Bucket()
+    // consola.info(`setOffersSizeFile:${offersSize}`)
+    // consola.info(`setOffersSizeBucket:${s3SizeOffer}`)
+    // influxdb(200, `recipe_size_offers_${offersSize}`)
+    // influxdb(200, `recipe_size_offers_bucket_${s3SizeOffer}`)
+    // await redis.set(`offersSize`, offersSize!)
+    consola.info(`setFileSizeOffers:${sizeOfOffersDB}`)
+    await redis.set(`offersSize`, sizeOfOffersDB!)
   } catch (e) {
     consola.error('setFileSizeOffers:', e)
   }

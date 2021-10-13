@@ -100,10 +100,10 @@ export const getLocalFiles = (localFolder: string): Promise<string[]> => {
 
 };
 
-export const memorySizeOfBite = (obj:any) => {
-  let bytes = 0;
+export const memorySizeOfBite = (obj: any) => {
+  let bytes: number = 0;
 
-  const sizeOf = (obj:any) => {
+  const sizeOf = (obj: any) => {
     if (obj !== null && obj !== undefined) {
       switch (typeof obj) {
         case 'number':

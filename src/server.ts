@@ -130,9 +130,9 @@ io.on('connection', (socket: Socket) => {
       // consola.info(`Get size from engine:${fileSizeOffersCheck}`)
       let fileSizeOffersRecipe: number = Number(await redis.get(`offersSize`))
       if (fileSizeOffersCheck !== fileSizeOffersRecipe) {
-        consola.warn(`fileSize offer is different, fileSizeOffersCheck:${fileSizeOffersCheck}, fileSizeOffersRecipe:${fileSizeOffersRecipe} `)
+        consola.warn(`fileSize offer is different, fileSizeOffersCoTraffic:${fileSizeOffersCheck}, fileSizeOffersRecipe:${fileSizeOffersRecipe} `)
         influxdb(200, `file_size_changed_offers`)
-        io.to(socket.id).emit("fileSizeOffersCheck", fileSizeOffersCheck)
+        io.to(socket.id).emit("fileSizeOffersCheck", fileSizeOffersRecipe)
       }
 
     } catch (e) {
@@ -145,9 +145,9 @@ io.on('connection', (socket: Socket) => {
     try {
       let fileSizeCampaignsRecipe: number = Number(await redis.get(`campaignsSize`))
       if (fileSizeCampaignsCheck !== fileSizeCampaignsRecipe) {
-        consola.warn(`fileSize campaigns is different, fileSizeCampaignsCheck:${fileSizeCampaignsCheck}, fileSizeCampaignsRecipe:${fileSizeCampaignsRecipe} `)
+        consola.warn(`fileSize campaigns is different, fileSizeCampaignsCoTraffic:${fileSizeCampaignsCheck}, fileSizeCampaignsRecipe:${fileSizeCampaignsRecipe} `)
         influxdb(200, `file_size_changed_campaigns`)
-        io.to(socket.id).emit("fileSizeCampaignsCheck", fileSizeCampaignsCheck)
+        io.to(socket.id).emit("fileSizeCampaignsCheck", fileSizeCampaignsRecipe)
       }
 
     } catch (e) {
