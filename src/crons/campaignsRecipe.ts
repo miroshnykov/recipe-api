@@ -4,7 +4,7 @@ import JSONStream from "JSONStream";
 import consola from "consola";
 import fileSystem from "fs";
 import {getCampaigns} from "../models/campaignsModel";
-import {compressFile, deleteFile} from "../utils";
+import {compressFile, deleteFile, memorySizeOfBite} from "../utils";
 import {uploadCampaignsFileToS3Bucket} from "./campaignsRecipeSendToS3";
 import {setOffersRecipe} from "./offersRecipe";
 import {setFileSizeOffers} from "./offersFileSize";
@@ -15,7 +15,9 @@ export const setCampaignsRecipe = async () => {
 
   try {
     let campaigns = await getCampaigns()
-
+    let sizeOfCampaignsDB: number = memorySizeOfBite(campaigns)
+    consola.info(`setSizeCampaignsObject:${sizeOfCampaignsDB}`)
+    influxdb(200, `size_of_campaigns_db_${sizeOfCampaignsDB}`)
     const filePath: string | undefined = process.env.CAMPAIGNS_RECIPE_PATH
 
     let transformStream = JSONStream.stringify();
@@ -38,7 +40,7 @@ export const setCampaignsRecipe = async () => {
       }
     )
     setTimeout(uploadCampaignsFileToS3Bucket, 6000) // 6000 -> 6 sec
-    setTimeout(setFileSizeCampaigns, 20000)  // 20000 -> 2 sec
+    setTimeout(setFileSizeCampaigns, 20000, sizeOfCampaignsDB)  // 20000 -> 2 sec
 
   } catch (e) {
     influxdb(500, `recipe_campaigns_create_error`)

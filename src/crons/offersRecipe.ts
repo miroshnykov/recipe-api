@@ -12,9 +12,6 @@ export const setOffersRecipe = async () => {
   try {
     let offers: object | any = await getOffers()
 
-    let sizeOfOffersDB = memorySizeOfBite(offers)
-    consola.info(`setSizeOffersObject:${sizeOfOffersDB}`)
-    influxdb(200, `size_of_offers_db_${sizeOfOffersDB}`)
     let offerFormat: any = []
     for (const offer of offers) {
       if (offer.type === 'aggregated') {
@@ -31,6 +28,10 @@ export const setOffersRecipe = async () => {
       }
 
     }
+
+    let sizeOfOffersDB: number = memorySizeOfBite(offerFormat)
+    consola.info(`setSizeOffersObject:${sizeOfOffersDB}`)
+    influxdb(200, `size_of_offers_db_${sizeOfOffersDB}`)
 
     const filePath: string | undefined = process.env.OFFERS_RECIPE_PATH
 
@@ -54,7 +55,7 @@ export const setOffersRecipe = async () => {
       }
     )
     setTimeout(uploadOffersFileToS3Bucket, 6000)
-    setTimeout(setFileSizeOffers, 10000)
+    setTimeout(setFileSizeOffers, 10000, sizeOfOffersDB)
 
   } catch (e) {
     influxdb(500, `recipe_offers_create_error`)

@@ -32,6 +32,7 @@ export const getOffers = async () => {
                o.use_start_end_date    AS useStartEndDate,
                o.start_date            AS startDate,
                o.end_date              AS endDate,
+               o.descriptions          AS descriptions,
                o.type
         FROM sfl_offers o
                  left join sfl_offer_landing_pages lp
