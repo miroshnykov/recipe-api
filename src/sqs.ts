@@ -31,6 +31,7 @@ export const sqsProcess = async () => {
 
       let messageBody = JSON.parse(message.Body!)
       //  TODO move this logic to right place
+      const projectName = messageBody?.project || ''
       if (messageBody.type === 'offer' && messageBody.action === 'updateOrCreate') {
         let offersCaps = await getOfferCaps(messageBody.id)
         let generateOfferBody = {
@@ -41,9 +42,9 @@ export const sqsProcess = async () => {
           timestamp: Date.now(),
           body: `${JSON.stringify(offersCaps)}`
         }
-        // console.log('generateOfferBody:', generateOfferBody)
+
         // messages.push(JSON.parse(generateOfferBody))
-        influxdb(200, `sqs_offer_update_or_create`)
+        influxdb(200, `sqs_offer_update_or_create_${projectName}`)
         messages.push(generateOfferBody)
       } else if (messageBody.type === 'campaign' && messageBody.action === 'updateOrCreate') {
         let campaignInfo = await getCampaign(messageBody.id)
@@ -55,7 +56,7 @@ export const sqsProcess = async () => {
           timestamp: Date.now(),
           body: `${JSON.stringify(campaignInfo)}`
         }
-        influxdb(200, `sqs_campaign_update_or_create`)
+        influxdb(200, `sqs_campaign_update_or_create_${projectName}`)
         messages.push(generateCampaignBody)
       } else {
         influxdb(200, `sqs_offer_campaign_delete`)
