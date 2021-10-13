@@ -51,3 +51,13 @@ export const uploadOffersFileToS3Bucket = async () => {
 
 }
 
+export const checkSizeOfferFileFromS3Bucket = async () => {
+  let s3Key = process.env.S3_OFFERS_RECIPE_PATH || ''
+  let s3BucketName = process.env.S3_BUCKET_NAME || ''
+  let params = {Bucket: s3BucketName, Key: s3Key}
+  return s3.headObject(params!).promise()
+    .then(res => res.ContentLength)
+    .catch(e => {
+      consola.error('checkSizeOfferFileFromS3BucketError', e)
+    })
+}
