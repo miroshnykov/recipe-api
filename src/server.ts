@@ -174,7 +174,7 @@ io.on('connection', (socket: Socket) => {
     }
   }
 
-  updRedis[socket.id] = setInterval(sendUpdRedis, 10000) // 10 sec
+  updRedis[socket.id] = setInterval(sendUpdRedis, 30000) // 30 sec
 
   socket.on('disconnect', () => {
     clearInterval(updRedis[socket.id])
