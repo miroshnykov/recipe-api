@@ -1,6 +1,6 @@
 import consola from "consola";
 
-import {getOfferCaps} from "./models/offersModel";
+import {getOffer, reCalculateOffer} from "./models/offersModel";
 import {getCampaign} from "./models/campaignsModel";
 
 import AWS from 'aws-sdk'
@@ -33,14 +33,15 @@ export const sqsProcess = async () => {
       //  TODO move this logic to right place
       const projectName = messageBody?.project || ''
       if (messageBody.type === 'offer' && messageBody.action === 'updateOrCreate') {
-        let offersCaps = await getOfferCaps(messageBody.id)
+        let offer = await getOffer(messageBody.id)
+        let reCalculatedOffer = await reCalculateOffer(offer)
         let generateOfferBody = {
           comments: messageBody.comments,
           type: "offer",
           id: messageBody.id,
           action: messageBody.action,
           timestamp: Date.now(),
-          body: `${JSON.stringify(offersCaps)}`
+          body: `${JSON.stringify(reCalculatedOffer)}`
         }
 
         // messages.push(JSON.parse(generateOfferBody))

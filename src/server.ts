@@ -10,7 +10,11 @@ import {redis} from "./redis";
 import {setCampaignsRecipe} from "./crons/campaignsRecipe";
 import {setFileSizeCampaigns} from "./crons/campaignsFileSize";
 import {encrypt, decrypt, getLocalFiles, getFileSize} from "./utils"
-import {getOffer, getOfferCaps} from "./models/offersModel";
+import {
+  getOffers,
+  reCalculateOffer,
+  reCalculateOfferCaps
+} from "./models/offersModel";
 import {sqsProcess} from "./sqs";
 
 import {influxdb} from "./metrics";
@@ -111,11 +115,31 @@ app.get('/fileSizeInfoRedis', async (req: Request, res: Response) => {
 
 app.get('/caps', async (req: Request, res: Response) => {
   try {
-    let caps = await getOfferCaps(19)
+    let caps = await reCalculateOfferCaps(35890)
     // let offer = await getOffer(19)
     res.json({
       // offer,
       caps
+    })
+  } catch (e) {
+    res.json({err: e})
+  }
+
+})
+
+app.get('/customPayot', async (req: Request, res: Response) => {
+  try {
+    let offers: object | any = await getOffers()
+
+    let offerFormat: any = []
+    for (const offer of offers) {
+      let reCalcOffer = await reCalculateOffer(offer)
+      offerFormat.push(reCalcOffer)
+    }
+
+
+    res.json({
+      offerFormat
     })
   } catch (e) {
     res.json({err: e})
