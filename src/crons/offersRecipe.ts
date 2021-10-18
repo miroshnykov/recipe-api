@@ -3,7 +3,7 @@ import consola from "consola";
 import fileSystem from "fs";
 import {checkSizeOfferFileFromS3Bucket, uploadOffersFileToS3Bucket} from "./offersRecipeSendToS3";
 import {compressFile, deleteFile, memorySizeOfBite} from "../utils";
-import {getOffers, getAggregatedOffers, getOfferCaps} from "../models/offersModel";
+import {getOffers, getAggregatedOffers, reCalculateOffer} from "../models/offersModel";
 import {setFileSizeOffers} from "./offersFileSize";
 import {influxdb} from "../metrics";
 
@@ -14,19 +14,8 @@ export const setOffersRecipe = async () => {
 
     let offerFormat: any = []
     for (const offer of offers) {
-      if (offer.type === 'aggregated') {
-        offer.offersAggregatedIds = await getAggregatedOffers(offer.offerId)
-        offerFormat.push(offer)
-        continue
-      }
-
-      if (offer.capOfferId || offer.useStartEndDate) {
-        let offerWitCaps = await getOfferCaps(offer.offerId)
-        offerFormat.push(offerWitCaps)
-      } else {
-        offerFormat.push(offer)
-      }
-
+      let reCalcOffer = reCalculateOffer(offer)
+      offerFormat.push(reCalcOffer)
     }
 
     let sizeOfOffersDB: number = memorySizeOfBite(offerFormat)
