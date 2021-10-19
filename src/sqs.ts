@@ -1,11 +1,13 @@
 import consola from "consola";
 
-import {getOffer, reCalculateOffer} from "./models/offersModel";
+import {getOffer} from "./models/offersModel";
+import {reCalculateOffer} from "./models/offersCapsModel";
 import {getCampaign} from "./models/campaignsModel";
 
 import AWS from 'aws-sdk'
 import * as dotenv from "dotenv";
 import {influxdb} from "./metrics";
+import {IOffer} from "./interfaces/offers";
 
 dotenv.config();
 
@@ -33,7 +35,7 @@ export const sqsProcess = async () => {
       //  TODO move this logic to right place
       const projectName = messageBody?.project || ''
       if (messageBody.type === 'offer' && messageBody.action === 'updateOrCreate') {
-        let offer = await getOffer(messageBody.id)
+        let offer:IOffer = await getOffer(messageBody.id)
         let reCalculatedOffer = await reCalculateOffer(offer)
         let generateOfferBody = {
           comments: messageBody.comments,

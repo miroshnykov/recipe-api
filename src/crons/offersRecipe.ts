@@ -3,7 +3,8 @@ import consola from "consola";
 import fileSystem from "fs";
 import {checkSizeOfferFileFromS3Bucket, uploadOffersFileToS3Bucket} from "./offersRecipeSendToS3";
 import {compressFile, deleteFile, memorySizeOfBite} from "../utils";
-import {getOffers, getAggregatedOffers, reCalculateOffer} from "../models/offersModel";
+import {getOffers, getAggregatedOffers} from "../models/offersModel";
+import {reCalculateOffer} from "../models/offersCapsModel";
 import {setFileSizeOffers} from "./offersFileSize";
 import {influxdb} from "../metrics";
 
@@ -14,7 +15,7 @@ export const setOffersRecipe = async () => {
 
     let offerFormat: any = []
     for (const offer of offers) {
-      let reCalcOffer = reCalculateOffer(offer)
+      let reCalcOffer = await reCalculateOffer(offer)
       offerFormat.push(reCalcOffer)
     }
 

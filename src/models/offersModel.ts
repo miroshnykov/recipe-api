@@ -1,6 +1,7 @@
 import {FieldPacket, Pool} from "mysql2/promise";
 import {connect} from "../db/mysql";
 import consola from "consola";
+import {influxdb} from "../metrics";
 
 export const getOffers = async () => {
 
@@ -34,7 +35,7 @@ export const getOffers = async () => {
                o.end_date                                                                    AS endDate,
                o.descriptions                                                                AS descriptions,
                o.type,
-               (SELECT COUNT(*) FROM sfl_offers_custom_payout p WHERE p.sfl_offer_id = o.id) AS customPayputCount
+               (SELECT COUNT(*) FROM sfl_offers_custom_payout p WHERE p.sfl_offer_id = o.id) AS customPayOutCount
         FROM sfl_offers o
                  left join sfl_offer_landing_pages lp
                            ON lp.id = o.sfl_offer_landing_page_id
@@ -57,6 +58,7 @@ export const getOffers = async () => {
 
   } catch (e) {
     consola.error('getOffersError:', e)
+    influxdb(500, `get_offers_error`)
   }
 
 }
@@ -78,9 +80,11 @@ export const getAggregatedOffers = async (id: number) => {
     return offersAggregated
   } catch (e) {
     consola.error(e)
+    influxdb(500, `get_aggregated_offer_error`)
   }
 }
-const caps = async (offerId: number) => {
+
+export const getCaps = async (offerId: number) => {
   try {
     const conn: Pool = await connect();
     const capSql = `
@@ -120,6 +124,7 @@ const caps = async (offerId: number) => {
     return offerCaps.length !== 0 ? offerCaps[0] : []
   } catch (e) {
     consola.error('capsErr:', e)
+    influxdb(500, `get_caps_offer_error`)
   }
 
 }
@@ -144,177 +149,9 @@ export const getCustomPayoutPerGeo = async (offerId: number) => {
     return customPayOutData
   } catch (e) {
     consola.error('capsErr:', e)
+    influxdb(500, `get_custom_payout_error`)
   }
 
-}
-
-export const reCalculateOffer = async (offer: any) => {
-  try {
-    if (offer.type === 'aggregated') {
-      offer.offersAggregatedIds = await getAggregatedOffers(offer.offerId)
-      return offer
-    }
-
-    if (offer.capOfferId) {
-      offer = await reCalculateOfferCaps(offer.offerId)
-    }
-
-    if (offer.useStartEndDate) {
-      offer.startEndDateSetup = true
-      const currentDate = new Date()
-      offer.startEndDateSetting = {
-        startDate: offer.startDate,
-        endDate: offer.endDate,
-        dateRangePass: currentDate > offer.startDate && currentDate < offer.endDate
-      }
-    }
-
-    if (offer.customPayputCount > 0) {
-      let customPayOutData = await getCustomPayoutPerGeo(offer.offerId)
-      offer.customPayOutPerGeo = JSON.stringify(customPayOutData)
-    }
-
-    return offer
-  } catch (e) {
-    consola.error('reCalculateOfferError:', e)
-  }
-}
-
-export const reCalculateOfferCaps = async (offerId: number) => {
-
-  try {
-    let offer: any = await getOffer(offerId)
-    let offerCaps: any = await caps(offerId)
-    const {
-      clicksDaySetUpLimit,
-      clicksWeekSetUpLimit,
-      clicksMonthSetupLimit,
-      clicksDayCurrent,
-      clicksWeekCurrent,
-      clicksMonthCurrent,
-      capRedirectId,
-      clicksRedirectOfferUseDefault,
-      salesDaySetUpLimit,
-      salesWeekSetUpLimit,
-      salesMonthSetupLimit,
-      salesDayCurrent,
-      salesWeekCurrent,
-      salesMonthCurrent,
-      capSalesRedirectOfferId,
-      salesRedirectOfferUseDefault,
-      capsStartDate,
-      capsEndDate,
-      useStartEndDate
-    } = offerCaps
-
-    if (!clicksDaySetUpLimit
-      && !clicksWeekSetUpLimit
-      && !clicksMonthSetupLimit
-      && !salesDaySetUpLimit
-      && !salesWeekSetUpLimit
-      && !salesMonthSetupLimit
-    ) {
-      return offer
-    }
-
-    offer.capSetup = true
-    offer.capInfo = {}
-    let capInfo: any = {
-      sales: {},
-      clicks: {},
-      dateRangeSetUp: false
-    }
-
-    if (useStartEndDate && capsStartDate && capsEndDate) {
-      capInfo.dateRangeSetUp = true
-      capInfo.dateStart = capsStartDate
-      capInfo.dateEnd = capsEndDate
-      const currentDate = new Date()
-      capInfo.currentDate = capsEndDate
-      capInfo.dateRangePass = currentDate > capsStartDate && currentDate < capsEndDate
-
-      if (!capInfo.dateRangePass) {
-        offer.capInfo = capInfo
-        capInfo.dateRangeNotPass = `capsStartDate:${capsStartDate} capsEndDate:${capsEndDate}`
-        return offer
-      }
-    }
-
-    capInfo.sales.day = {
-      current: salesDayCurrent,
-      limit: salesDaySetUpLimit
-    }
-    capInfo.sales.week = {
-      current: salesWeekCurrent,
-      limit: salesWeekSetUpLimit
-    }
-    capInfo.sales.month = {
-      current: salesMonthCurrent,
-      limit: salesMonthSetupLimit
-    }
-
-    if (salesMonthSetupLimit && salesWeekSetUpLimit && salesMonthSetupLimit) {
-      offer.capsSalesUnderLimit = salesDayCurrent < salesDaySetUpLimit
-        && salesWeekCurrent < salesWeekSetUpLimit
-        && salesMonthCurrent < salesMonthSetupLimit
-      offer.capsSalesOverLimit = !offer.capsSalesUnderLimit
-    }
-
-    capInfo.clicks.day = {
-      current: clicksDayCurrent,
-      limit: clicksDaySetUpLimit
-    }
-    capInfo.clicks.week = {
-      current: clicksWeekCurrent,
-      limit: clicksWeekSetUpLimit
-    }
-    capInfo.clicks.month = {
-      current: clicksMonthCurrent,
-      limit: clicksMonthSetupLimit
-    }
-
-    if (clicksDaySetUpLimit && clicksWeekSetUpLimit && clicksMonthSetupLimit) {
-      offer.capsClicksUnderLimit = clicksDayCurrent < clicksDaySetUpLimit
-        && clicksWeekCurrent < clicksWeekSetUpLimit
-        && clicksMonthCurrent < clicksMonthSetupLimit
-      offer.capsClicksOverLimit = !offer.capsClicksUnderLimit
-    }
-
-
-    offer.capInfo = capInfo
-    if (offer.capsClicksOverLimit) {
-      if (clicksRedirectOfferUseDefault) {
-        offer.capInfo.exitTrafficClicks = true
-        await offerReferred(offer, offer.offerIdRedirectExitTraffic, 'capsClicksOverLimit', 'capsClicksOverLimitExitTraffic')
-
-      } else {
-        offer.capInfo.capClicksRedirect = true
-        await offerReferred(offer, capRedirectId, 'capsClicksOverLimit', 'capsClicksOverLimitCapRedirect')
-
-      }
-
-    }
-
-    if (offer.capsSalesOverLimit) {
-
-      if (salesRedirectOfferUseDefault) {
-        offer.capInfo.exitTrafficSales = true
-        await offerReferred(offer, offer.offerIdRedirectExitTraffic, 'capsSalesOverLimit', 'capsSalesOverLimitExitTraffic')
-
-      } else {
-        offer.capInfo.capSalesRedirect = true
-        await offerReferred(offer, capSalesRedirectOfferId, 'capsSalesOverLimit', 'capsSalesOverLimitCapRedirect')
-
-      }
-    }
-    if (!offer.landingPageUrl) {
-      offer.landingPageUrl = `something happened to setup landingPageUrl offerId:${offer.offerId} see errors`
-    }
-
-    return offer
-  } catch (e) {
-    console.log(e)
-  }
 }
 
 export const getOffer = async (id: number) => {
@@ -348,7 +185,7 @@ export const getOffer = async (id: number) => {
                o.start_date                                                                  AS startDate,
                o.end_date                                                                    AS endDate,
                o.type                                                                        AS type,
-               (SELECT COUNT(*) FROM sfl_offers_custom_payout p WHERE p.sfl_offer_id = o.id) AS customPayputCount,
+               (SELECT COUNT(*) FROM sfl_offers_custom_payout p WHERE p.sfl_offer_id = o.id) AS customPayOutCount,
                c.sfl_offer_id                                                                AS capOfferId
         FROM sfl_offers o
                  left join sfl_offer_landing_pages lp
@@ -362,7 +199,7 @@ export const getOffer = async (id: number) => {
                  left join sfl_vertical v
                            ON v.id = o.sfl_vertical_id
                  left join sfl_offers_cap c
-                           ON c.sfl_offer_id = o.id        
+                           ON c.sfl_offer_id = o.id
         WHERE o.id = ${id}
     `
     const [offer]: [any[], FieldPacket[]] = await conn.query(sql)
@@ -372,13 +209,7 @@ export const getOffer = async (id: number) => {
 
   } catch (e) {
     consola.error(e)
+    influxdb(500, `get_offer_error`)
   }
 }
 
-const offerReferred = async (offer: any, referredOfferId: number, redirectType: string, redirectReason: string) => {
-  offer.landingPageUrlOrigin = offer.landingPageUrl || ''
-  offer.offerIdOrigin = offer.offerId || 0
-  offer.referredOfferId = referredOfferId || 0
-  offer.redirectType = redirectType
-  offer.redirectReason = redirectReason
-}
