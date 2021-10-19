@@ -169,7 +169,7 @@ export const getOffer = async (id: number) => {
                v.name                                                                        AS verticalName,
                o.advertiser_manager_id                                                       AS advertiserManagerId,
                o.conversion_type                                                             AS conversionType,
-               o.currency_id                                                                 AS currencyid,
+               o.currency_id                                                                 AS currencyId,
                o.status                                                                      AS status,
                o.payin                                                                       AS payin,
                o.payout                                                                      AS payout,

@@ -8,7 +8,7 @@ export interface IOffer {
   verticalName: string
   advertiserManagerId: number
   conversionType: string
-  currencyid: number
+  currencyId: number
   status: string
   payin: number
   payout: number
