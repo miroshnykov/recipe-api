@@ -10,11 +10,12 @@ import {redis} from "./redis";
 import {setCampaignsRecipe} from "./crons/campaignsRecipe";
 import {setFileSizeCampaigns} from "./crons/campaignsFileSize";
 import {encrypt, decrypt, getLocalFiles, getFileSize} from "./utils"
+import {getOffer, getOffers} from "./models/offersModel"
+
 import {
-  getOffers,
   reCalculateOffer,
   reCalculateOfferCaps
-} from "./models/offersModel";
+} from "./models/offersCapsModel";
 import {sqsProcess} from "./sqs";
 
 import {influxdb} from "./metrics";
@@ -115,6 +116,7 @@ app.get('/fileSizeInfoRedis', async (req: Request, res: Response) => {
 
 app.get('/caps', async (req: Request, res: Response) => {
   try {
+    // let offers:IOffer[] = await getOffers()||[]
     let caps = await reCalculateOfferCaps(35890)
     // let offer = await getOffer(19)
     res.json({
