@@ -4,10 +4,8 @@ import consola from "consola";
 import {influxdb} from "../metrics";
 
 export const getOffers = async () => {
-
   try {
     const conn: Pool = await connect();
-
     let sql = `
         SELECT o.id                                                                          AS offerId,
                o.name                                                                        AS name,
@@ -61,11 +59,9 @@ export const getOffers = async () => {
     consola.error('getOffersError:', e)
     influxdb(500, `get_offers_error`)
   }
-
 }
 
 export const getAggregatedOffers = async (id: number) => {
-
   try {
     const conn: Pool = await connect();
     const sql = `
@@ -115,7 +111,6 @@ export const getCaps = async (offerId: number) => {
                  join sfl_offers_cap_current_data c1
                       ON c1.sfl_offer_id = o.id
         WHERE o.id = ${offerId}
-
     `
     const [offerCaps]: [any[], FieldPacket[]] = await conn.query(capSql)
     await conn.end();
@@ -127,7 +122,6 @@ export const getCaps = async (offerId: number) => {
     consola.error('capsErr:', e)
     influxdb(500, `get_caps_offer_error`)
   }
-
 }
 
 export const getCustomPayoutPerGeo = async (offerId: number) => {
@@ -152,11 +146,9 @@ export const getCustomPayoutPerGeo = async (offerId: number) => {
     consola.error('capsErr:', e)
     influxdb(500, `get_custom_payout_error`)
   }
-
 }
 
 export const getOffer = async (id: number) => {
-
   try {
     const conn: Pool = await connect();
 

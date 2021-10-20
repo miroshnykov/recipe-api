@@ -1,24 +1,21 @@
-import zlib from "zlib";
-import fs from "fs";
 import JSONStream from "JSONStream";
 import consola from "consola";
 import fileSystem from "fs";
 import {getCampaigns} from "../models/campaignsModel";
 import {compressFile, deleteFile, memorySizeOfBite} from "../utils";
-import {uploadCampaignsFileToS3Bucket} from "./campaignsRecipeSendToS3";
-import {setOffersRecipe} from "./offersRecipe";
-import {setFileSizeOffers} from "./offersFileSize";
-import {setFileSizeCampaigns} from "./campaignsFileSize";
 import {influxdb} from "../metrics";
+import {setFileSize} from "./setFileSize";
+import {IRecipeType} from "../interfaces/recipeTypes";
+import {ICampaign} from "../interfaces/campaigns";
+import {uploadFileToS3Bucket} from "./recipeSendToS3";
 
 export const setCampaignsRecipe = async () => {
-
   try {
-    let campaigns = await getCampaigns()
+    let campaigns:ICampaign[] = await getCampaigns()
     let sizeOfCampaignsDB: number = memorySizeOfBite(campaigns)
-    consola.info(`setSizeCampaignsObject:${sizeOfCampaignsDB}`)
+    consola.info(`Identify Size of Campaigns Object:${sizeOfCampaignsDB}`)
     influxdb(200, `size_of_campaigns_db_${sizeOfCampaignsDB}`)
-    const filePath: string | undefined = process.env.CAMPAIGNS_RECIPE_PATH
+    const filePath: string = process.env.CAMPAIGNS_RECIPE_PATH || ''
 
     let transformStream = JSONStream.stringify();
     let outputStream = fileSystem.createWriteStream(filePath!);
@@ -39,13 +36,12 @@ export const setCampaignsRecipe = async () => {
         consola.success(`File Campaigns (count:${campaigns?.length}) created path:${filePath} `)
       }
     )
-    setTimeout(uploadCampaignsFileToS3Bucket, 6000) // 6000 -> 6 sec
-    setTimeout(setFileSizeCampaigns, 20000, sizeOfCampaignsDB)  // 20000 -> 2 sec
+    setTimeout(uploadFileToS3Bucket, 6000, IRecipeType.CAMPAIGNS) // 6000 -> 6 sec
+    setTimeout(setFileSize, 20000, IRecipeType.CAMPAIGNS, sizeOfCampaignsDB)  // 20000 -> 20 sec
 
   } catch (e) {
     influxdb(500, `recipe_campaigns_create_error`)
     consola.error('create campaign recipe Error:', e)
   }
-
 }
 

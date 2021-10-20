@@ -44,11 +44,11 @@ export const reCalculateOffer = async (offer: IOffer) => {
   } catch (e) {
     consola.error('reCalculateOfferError:', e)
     influxdb(500, `re_calculate_offer_error`)
+    return []
   }
 }
 
 export const reCalculateOfferCaps = async (offerId: number) => {
-
   try {
     let offer: IOffer = await getOffer(offerId)
     let offerCaps: any = await getCaps(offerId)

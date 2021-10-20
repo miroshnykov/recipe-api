@@ -1,4 +1,5 @@
 import {ICapInfo} from "./caps"
+
 export interface IOffer {
   offerId: number
   name: string
@@ -30,7 +31,7 @@ export interface IOffer {
   startEndDateSetup: boolean | undefined
   startEndDateSetting: object
   customPayOutPerGeo: string
-  offersAggregatedIds: object[]
+  offersAggregatedIds?: object[]
   capInfo: ICapInfo
   landingPageUrlOrigin: string | undefined
   offerIdOrigin: number | undefined

@@ -1,8 +1,8 @@
-import {FieldPacket, Pool} from "mysql2/promise";
+import {FieldPacket, Pool, RowDataPacket} from "mysql2/promise";
 import {connect} from "../db/mysql";
 import consola from "consola";
-export const getCampaigns = async () => {
 
+export const getCampaigns = async () => {
   try {
     const conn: Pool = await connect();
 
@@ -25,12 +25,11 @@ export const getCampaigns = async () => {
 
   } catch (e) {
     consola.error('getCampaignsError:', e)
+    return []
   }
-
 }
 
 export const getCampaign = async (id:number) => {
-
   try {
     const conn: Pool = await connect();
 
@@ -52,6 +51,6 @@ export const getCampaign = async (id:number) => {
 
   } catch (e) {
     consola.error('getCampaignError:', e)
+    return []
   }
-
 }
