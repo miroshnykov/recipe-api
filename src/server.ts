@@ -5,10 +5,8 @@ import consola from "consola";
 
 import express, {Application, Request, Response, NextFunction} from 'express'
 import {setOffersRecipe} from "./crons/offersRecipe"
-import {setFileSizeOffers} from "./crons/offersFileSize";
 import {redis} from "./redis";
 import {setCampaignsRecipe} from "./crons/campaignsRecipe";
-import {setFileSizeCampaigns} from "./crons/campaignsFileSize";
 import {encrypt, decrypt, getLocalFiles, getFileSize} from "./utils"
 import {getOffer, getOffers} from "./models/offersModel"
 
@@ -114,40 +112,38 @@ app.get('/fileSizeInfoRedis', async (req: Request, res: Response) => {
 
 })
 
-app.get('/caps', async (req: Request, res: Response) => {
-  try {
-    // let offers:IOffer[] = await getOffers()||[]
-    let caps = await reCalculateOfferCaps(35890)
-    // let offer = await getOffer(19)
-    res.json({
-      // offer,
-      caps
-    })
-  } catch (e) {
-    res.json({err: e})
-  }
+// app.get('/caps', async (req: Request, res: Response) => {
+//   try {
+//     // let offers:IOffer[] = await getOffers()||[]
+//     let caps = await reCalculateOfferCaps(35890)
+//     // let offer = await getOffer(19)
+//     res.json({
+//       // offer,
+//       caps
+//     })
+//   } catch (e) {
+//     res.json({err: e})
+//   }
+//
+// })
 
-})
-
-app.get('/customPayot', async (req: Request, res: Response) => {
-  try {
-    let offers: object | any = await getOffers()
-
-    let offerFormat: any = []
-    for (const offer of offers) {
-      let reCalcOffer = await reCalculateOffer(offer)
-      offerFormat.push(reCalcOffer)
-    }
-
-
-    res.json({
-      offerFormat
-    })
-  } catch (e) {
-    res.json({err: e})
-  }
-
-})
+// app.get('/customPayot', async (req: Request, res: Response) => {
+//   try {
+//     let offers: object | any = await getOffers()
+//
+//     let offerFormat: any = []
+//     for (const offer of offers) {
+//       let reCalcOffer = await reCalculateOffer(offer)
+//       offerFormat.push(reCalcOffer)
+//     }
+//
+//     res.json({
+//       offerFormat
+//     })
+//   } catch (e) {
+//     res.json({err: e})
+//   }
+// })
 
 io.on('connection', (socket: Socket) => {
   consola.success('connection');
@@ -213,10 +209,10 @@ io.on('connect', async (socket: Socket) => {
 })
 
 setInterval(setCampaignsRecipe, 300000) // 300000 -> 5 min
-setInterval(setOffersRecipe, 300000) // 300000 -> 5 min
+setInterval(setOffersRecipe, 312000) // 312000 -> 5.2 min
 
-setTimeout(setCampaignsRecipe, 20000) // 20000 -> 20 sec
-setTimeout(setOffersRecipe, 10000) // 20000 -> 20 sec
+setTimeout(setCampaignsRecipe, 20000) // 20000 -> 6 sec
+setTimeout(setOffersRecipe, 10000) // 10000 -> 10 sec
 
 httpServer.listen(port, host, (): void => {
   consola.success(`server is running on http://${host}:${port}`)

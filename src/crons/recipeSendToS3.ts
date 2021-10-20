@@ -5,6 +5,7 @@ import {ManagedUpload} from "aws-sdk/lib/s3/managed_upload";
 import SendData = ManagedUpload.SendData;
 import * as dotenv from "dotenv";
 import {influxdb} from "../metrics";
+import {IRecipeType} from "../interfaces/recipeTypes";
 
 dotenv.config();
 
@@ -15,40 +16,52 @@ AWS.config.update({
 });
 
 const s3 = new AWS.S3();
-const tempFileName: string = process.env.OFFERS_RECIPE_PATH + '.gz' || ''
-export const uploadOffersFileToS3Bucket = async () => {
+
+export const uploadFileToS3Bucket = async (type: IRecipeType) => {
   try {
+    let tempFileName: string = ''
+    let s3Key: string = ''
+    let s3BucketName: string = ''
+    switch (type) {
+      case 'offers':
+        tempFileName = process.env.OFFERS_RECIPE_PATH + '.gz' || ''
+        s3Key = process.env.S3_OFFERS_RECIPE_PATH || ''
+        s3BucketName = process.env.S3_BUCKET_NAME || ''
+        break;
+      case 'campaigns':
+        tempFileName = process.env.CAMPAIGNS_RECIPE_PATH + '.gz' || ''
+        s3Key = process.env.S3_CAMPAIGNS_RECIPE_PATH || ''
+        s3BucketName = process.env.S3_BUCKET_NAME || ''
+        break;
+      default:
+        throw Error(`${type} not define, not able to get file from s3 `)
+    }
 
     fs.readFile(tempFileName, (err, data) => {
       if (err) throw err;
-      let s3Key: string = process.env.S3_OFFERS_RECIPE_PATH || ''
-      let s3BucketName: string = process.env.S3_BUCKET_NAME || ''
 
       const params = {
         Bucket: s3BucketName,
         Key: s3Key,
         Body: data
       };
-      // consola.info('uploadOffersFileToS3Bucket:', params)
+      // consola.info(`upload${type}FileToS3Bucket:${s3BucketName} , s3Key:${s3Key}`)
 
       s3.upload(params, (err: Error, data: SendData) => {
         if (err) {
           consola.error(err);
         } else {
-          influxdb(200, `recipe_offers_uploaded_to_s3`)
-          consola.info(`File offers uploaded successfully at ${data.Location}`);
+          influxdb(200, `recipe_${type}_uploaded_to_s3`)
+          consola.info(`File ${type} uploaded successfully at ${data.Location}`);
         }
 
       });
     });
 
   } catch (error) {
-    influxdb(500, `recipe_offers_uploaded_to_s3_error`)
+    influxdb(500, `recipe_${type}_uploaded_to_s3_error`)
     console.error('s3 upload error:', error)
-  } finally {
-
   }
-
 }
 
 export const checkSizeOfferFileFromS3Bucket = async () => {

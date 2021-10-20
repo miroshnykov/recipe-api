@@ -8,6 +8,8 @@ import AWS from 'aws-sdk'
 import * as dotenv from "dotenv";
 import {influxdb} from "./metrics";
 import {IOffer} from "./interfaces/offers";
+import {ICampaign} from "./interfaces/campaigns";
+import {ISqsMessage} from "./interfaces/sqsMessage";
 
 dotenv.config();
 
@@ -35,9 +37,9 @@ export const sqsProcess = async () => {
       //  TODO move this logic to right place
       const projectName = messageBody?.project || ''
       if (messageBody.type === 'offer' && messageBody.action === 'updateOrCreate') {
-        let offer:IOffer = await getOffer(messageBody.id)
-        let reCalculatedOffer = await reCalculateOffer(offer)
-        let generateOfferBody = {
+        let offer: IOffer = await getOffer(messageBody.id)
+        let reCalculatedOffer: IOffer | any[] = await reCalculateOffer(offer)
+        let generateOfferBody: ISqsMessage = {
           comments: messageBody.comments,
           type: "offer",
           id: messageBody.id,
@@ -50,8 +52,8 @@ export const sqsProcess = async () => {
         influxdb(200, `sqs_offer_update_or_create_${projectName}`)
         messages.push(generateOfferBody)
       } else if (messageBody.type === 'campaign' && messageBody.action === 'updateOrCreate') {
-        let campaignInfo = await getCampaign(messageBody.id)
-        let generateCampaignBody = {
+        let campaignInfo: ICampaign = await getCampaign(messageBody.id)
+        let generateCampaignBody: ISqsMessage = {
           comments: messageBody.comments,
           type: "campaign",
           id: messageBody.id,
