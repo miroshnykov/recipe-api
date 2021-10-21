@@ -8,13 +8,23 @@ import {setFileSize} from "./setFileSize";
 import {IRecipeType} from "../interfaces/recipeTypes";
 import {ICampaign} from "../interfaces/campaigns";
 import {uploadFileToS3Bucket} from "./recipeSendToS3";
+import {getFileSize} from "./getFileSize";
 
 export const setCampaignsRecipe = async () => {
   try {
-    let campaigns:ICampaign[] = await getCampaigns()
-    let sizeOfCampaignsDB: number = memorySizeOfBite(campaigns)
-    consola.info(`Identify Size of Campaigns Object:${sizeOfCampaignsDB}`)
+    const campaigns: ICampaign[] = await getCampaigns()
+    const sizeOfCampaignsDB: number = memorySizeOfBite(campaigns)
+    consola.info(`Identify Size of Campaigns from DB Object:${sizeOfCampaignsDB}`)
     influxdb(200, `size_of_campaigns_db_${sizeOfCampaignsDB}`)
+
+    const sizeOfCampaignsRedis: number = await getFileSize(IRecipeType.CAMPAIGNS)
+    consola.info(`Identify Size of Campaigns from Redis:${sizeOfCampaignsRedis}`)
+
+    if (sizeOfCampaignsDB === sizeOfCampaignsRedis) {
+      consola.info(`Size of Campaigns in Redis the same like in DB :${sizeOfCampaignsDB}, don't need create recipe`)
+      return
+    }
+    consola.info(`Size of Campaigns from Redis and DB is different, lets create the recipe, sizeOfCampaignsDB:${sizeOfCampaignsDB}, sizeOfCampaignsRedis:${sizeOfCampaignsRedis}`)
     const filePath: string = process.env.CAMPAIGNS_RECIPE_PATH || ''
 
     let transformStream = JSONStream.stringify();
