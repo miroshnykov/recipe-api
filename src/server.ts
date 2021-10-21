@@ -151,6 +151,11 @@ io.on('connection', (socket: Socket) => {
     try {
       // consola.info(`Get size from engine:${fileSizeOffersCheck}`)
       let fileSizeOffersRecipe: number = Number(await redis.get(`offersSize`))
+
+      if (!fileSizeOffersRecipe) {
+        consola.info(`fileSizeOffersRecipe:${fileSizeOffersRecipe} not set up yet, dont need to send to co-traffic empty size`)
+        return
+      }
       if (fileSizeOffersCheck !== fileSizeOffersRecipe) {
         consola.warn(`fileSize offer is different, fileSizeOffersCoTraffic:${fileSizeOffersCheck}, fileSizeOffersRecipe:${fileSizeOffersRecipe} `)
         influxdb(200, `file_size_changed_offers`)
@@ -166,6 +171,11 @@ io.on('connection', (socket: Socket) => {
   socket.on('fileSizeCampaignsCheck', async (fileSizeCampaignsCheck: number) => {
     try {
       let fileSizeCampaignsRecipe: number = Number(await redis.get(`campaignsSize`))
+      if (!fileSizeCampaignsRecipe) {
+        consola.info(`fileSizeCampaignsRecipe:${fileSizeCampaignsRecipe} not set up yet, dont need to send to co-traffic empty size `)
+        return
+      }
+
       if (fileSizeCampaignsCheck !== fileSizeCampaignsRecipe) {
         consola.warn(`fileSize campaigns is different, fileSizeCampaignsCoTraffic:${fileSizeCampaignsCheck}, fileSizeCampaignsRecipe:${fileSizeCampaignsRecipe} `)
         influxdb(200, `file_size_changed_campaigns`)
