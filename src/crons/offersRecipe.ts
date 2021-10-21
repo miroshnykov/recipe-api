@@ -9,20 +9,30 @@ import {setFileSize} from "./setFileSize";
 import {IRecipeType} from "../interfaces/recipeTypes";
 import {IOffer} from "../interfaces/offers";
 import {uploadFileToS3Bucket} from "./recipeSendToS3";
+import {getFileSize} from "./getFileSize";
 
 export const setOffersRecipe = async () => {
   try {
-    let offers: object | any = await getOffers()
+    const offers: object | any = await getOffers()
 
-    let offerFormat: any = []
+    const offerFormat: any = []
     for (const offer of offers) {
-      let reCalcOffer:IOffer | any[] = await reCalculateOffer(offer)
+      const reCalcOffer: IOffer | any[] = await reCalculateOffer(offer)
       offerFormat.push(reCalcOffer)
     }
 
-    let sizeOfOffersDB: number = memorySizeOfBite(offerFormat)
+    const sizeOfOffersDB: number = memorySizeOfBite(offerFormat)
     consola.info(`Identify Size of Offers Object:${sizeOfOffersDB}`)
     influxdb(200, `size_of_offers_db_${sizeOfOffersDB}`)
+
+    const sizeOfOffersRedis: number = await getFileSize(IRecipeType.OFFERS)
+    consola.info(`Identify Size of Offers from Redis:${sizeOfOffersRedis}`)
+
+    if (sizeOfOffersDB === sizeOfOffersRedis) {
+      consola.info(`Size of Offers in Redis the same like in DB :${sizeOfOffersDB}, don't need create recipe`)
+      return
+    }
+    consola.info(`Size of Offers from Redis and DB is different, lets create the recipe, sizeOfOffersDB:${sizeOfOffersDB}, sizeOfOffersRedis:${sizeOfOffersRedis}`)
 
     const filePath: string = process.env.OFFERS_RECIPE_PATH || ''
 
