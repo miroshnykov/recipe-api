@@ -154,12 +154,11 @@ export const reCalculateOfferCaps = async (offerId: number) => {
     capInfo.sales.month.current = salesMonthCurrent
     capInfo.sales.month.limit = salesMonthSetupLimit
 
-
-    if (salesMonthSetupLimit && salesWeekSetUpLimit && salesMonthSetupLimit) {
+    if (salesDaySetUpLimit || salesWeekSetUpLimit || salesMonthSetupLimit) {
 
       capInfo.capsSalesUnderLimit = salesDayCurrent < salesDaySetUpLimit
-        && salesWeekCurrent < salesWeekSetUpLimit
-        && salesMonthCurrent < salesMonthSetupLimit
+        || salesWeekCurrent < salesWeekSetUpLimit
+        || salesMonthCurrent < salesMonthSetupLimit
       capInfo.capsSalesOverLimit = !capInfo.capsSalesUnderLimit
     }
 
@@ -173,10 +172,10 @@ export const reCalculateOfferCaps = async (offerId: number) => {
     capInfo.clicks.month.limit = clicksMonthSetupLimit
 
 
-    if (clicksDaySetUpLimit && clicksWeekSetUpLimit && clicksMonthSetupLimit) {
+    if (clicksDaySetUpLimit || clicksWeekSetUpLimit || clicksMonthSetupLimit) {
       capInfo.capsClicksUnderLimit = clicksDayCurrent < clicksDaySetUpLimit
-        && clicksWeekCurrent < clicksWeekSetUpLimit
-        && clicksMonthCurrent < clicksMonthSetupLimit
+        || clicksWeekCurrent < clicksWeekSetUpLimit
+        || clicksMonthCurrent < clicksMonthSetupLimit
       capInfo.capsClicksOverLimit = !capInfo.capsClicksUnderLimit
     }
 
@@ -206,9 +205,7 @@ export const reCalculateOfferCaps = async (offerId: number) => {
 
       }
     }
-    if (!offer.landingPageUrl) {
-      offer.landingPageUrl = `something happened to setup landingPageUrl offerId:${offer.offerId} see errors`
-    }
+
     offer.capInfo = capInfo
     return offer
   } catch (e) {
@@ -217,7 +214,7 @@ export const reCalculateOfferCaps = async (offerId: number) => {
   }
 }
 
-const offerReferred = async (offer: any, referredOfferId: number, redirectType: string, redirectReason: string) => {
+const offerReferred = async (offer: IOffer, referredOfferId: number, redirectType: string, redirectReason: string) => {
   offer.landingPageUrlOrigin = offer.landingPageUrl || ''
   offer.offerIdOrigin = offer.offerId || 0
   offer.referredOfferId = referredOfferId || 0

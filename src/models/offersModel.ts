@@ -110,7 +110,7 @@ export const getCaps = async (offerId: number) => {
                       ON c.sfl_offer_id = o.id
                  join sfl_offers_cap_current_data c1
                       ON c1.sfl_offer_id = o.id
-        WHERE o.id = ${offerId}
+        WHERE o.id = ${offerId} AND c.enabled = true
     `
     const [offerCaps]: [any[], FieldPacket[]] = await conn.query(capSql)
     await conn.end();
