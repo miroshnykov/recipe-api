@@ -39,7 +39,8 @@ export const reCalculateOffer = async (offer: IOffer) => {
       let customPayOutData = await getCustomPayoutPerGeo(offer.offerId)
       offer.customPayOutPerGeo = JSON.stringify(customPayOutData)
     }
-
+    offer.payin = Number(offer.payin)
+    offer.payout = Number(offer.payout)
     return offer
   } catch (e) {
     consola.error('reCalculateOfferError:', e)
