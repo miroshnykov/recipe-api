@@ -108,7 +108,7 @@ export const getCaps = async (offerId: number) => {
         FROM sfl_offers o
                  join sfl_offers_cap c
                       ON c.sfl_offer_id = o.id
-                 join sfl_offers_cap_current_data c1
+                 left join sfl_offers_cap_current_data c1
                       ON c1.sfl_offer_id = o.id
         WHERE o.id = ${offerId} AND c.enabled = true
     `

@@ -3,7 +3,8 @@ import {getAggregatedOffers, getCaps, getCustomPayoutPerGeo, getOffer} from "./o
 import {influxdb} from "../metrics";
 
 import {IOffer} from "../interfaces/offers"
-import {ICapInfo} from "../interfaces/caps"
+import {ICapInfo, ICapResult} from "../interfaces/caps"
+import {IRedirectReason, IRedirectType} from "../interfaces/recipeTypes";
 
 export const reCalculateOffer = async (offer: IOffer) => {
   try {
@@ -124,9 +125,13 @@ export const reCalculateOfferCaps = async (offerId: number) => {
       dateRangePass: null,
       dateRangeNotPassDescriptions: null,
       capsSalesUnderLimit: null,
+      capsSalesUnderLimitDetails: null,
       capsSalesOverLimit: null,
+      capsSalesOverLimitDetails: null,
       capsClicksUnderLimit: null,
+      capsClicksUnderLimitDetails: null,
       capsClicksOverLimit: null,
+      capsClicksOverLimitDetails: null,
       exitTrafficSales: null,
       exitTrafficClicks: null
     }
@@ -155,12 +160,41 @@ export const reCalculateOfferCaps = async (offerId: number) => {
     capInfo.sales.month.current = salesMonthCurrent
     capInfo.sales.month.limit = salesMonthSetupLimit
 
-    if (salesDaySetUpLimit || salesWeekSetUpLimit || salesMonthSetupLimit) {
+    const conditionsSetupSales: ICapResult[] = [
+      {
+        "period": "day",
+        "limit": salesDaySetUpLimit,
+        "currentAmount": salesDayCurrent
+      },
+      {
+        "period": "week",
+        "limit": salesWeekSetUpLimit,
+        "currentAmount": salesWeekCurrent
+      },
+      {
+        "period": "month",
+        "limit": salesMonthSetupLimit,
+        "currentAmount": salesMonthCurrent
+      },
+    ]
+    const conditionsSetupSalesNotEmpty = conditionsSetupSales.filter(i => (i.limit))
 
-      capInfo.capsSalesUnderLimit = salesDayCurrent < salesDaySetUpLimit
-        || salesWeekCurrent < salesWeekSetUpLimit
-        || salesMonthCurrent < salesMonthSetupLimit
-      capInfo.capsSalesOverLimit = !capInfo.capsSalesUnderLimit
+    const salesResultUnderLimit: ICapResult[] = []
+    const salesResultOverLimit: ICapResult[] = []
+    conditionsSetupSalesNotEmpty.forEach((i: ICapResult) => {
+      if (i.currentAmount < i.limit) {
+        salesResultUnderLimit.push(i)
+      } else {
+        salesResultOverLimit.push(i)
+      }
+    })
+
+    if (salesResultUnderLimit.length !== 0 && salesResultUnderLimit.length === conditionsSetupSalesNotEmpty.length) {
+      capInfo.capsSalesUnderLimit = true
+      capInfo.capsSalesUnderLimitDetails = salesResultUnderLimit.map((i: { period: string }) => (i.period)).join(',')
+    } else {
+      capInfo.capsSalesOverLimit = true
+      capInfo.capsSalesOverLimitDetails = salesResultOverLimit.map((i: { period: string }) => (i.period)).join(',')
     }
 
     capInfo.clicks.day.current = clicksDayCurrent
@@ -172,38 +206,78 @@ export const reCalculateOfferCaps = async (offerId: number) => {
     capInfo.clicks.month.current = clicksMonthCurrent
     capInfo.clicks.month.limit = clicksMonthSetupLimit
 
+    const conditionsSetupClicks: ICapResult[] = [
+      {
+        "period": "day",
+        "limit": clicksDaySetUpLimit,
+        "currentAmount": clicksDayCurrent
+      },
+      {
+        "period": "week",
+        "limit": clicksWeekSetUpLimit,
+        "currentAmount": clicksWeekCurrent
+      },
+      {
+        "period": "month",
+        "limit": clicksMonthSetupLimit,
+        "currentAmount": clicksMonthCurrent
+      },
+    ]
+    const conditionsSetupClicksNotEmpty = conditionsSetupClicks.filter(i => (i.limit))
 
-    if (clicksDaySetUpLimit || clicksWeekSetUpLimit || clicksMonthSetupLimit) {
-      capInfo.capsClicksUnderLimit = clicksDayCurrent < clicksDaySetUpLimit
-        || clicksWeekCurrent < clicksWeekSetUpLimit
-        || clicksMonthCurrent < clicksMonthSetupLimit
-      capInfo.capsClicksOverLimit = !capInfo.capsClicksUnderLimit
+    const clicksResultUnderLimit: ICapResult[] = []
+    const clicksResultOverLimit: ICapResult[] = []
+    conditionsSetupClicksNotEmpty.forEach((i: ICapResult) => {
+      if (i.currentAmount < i.limit) {
+        clicksResultUnderLimit.push(i)
+      } else {
+        clicksResultOverLimit.push(i)
+      }
+    })
+
+    if (clicksResultUnderLimit.length !== 0 && clicksResultUnderLimit.length === conditionsSetupClicksNotEmpty.length) {
+      capInfo.capsClicksUnderLimit = true
+      capInfo.capsClicksUnderLimitDetails = clicksResultUnderLimit.map((i: { period: string }) => (i.period)).join(',')
+    } else {
+      capInfo.capsClicksOverLimit = true
+      capInfo.capsClicksOverLimitDetails = clicksResultOverLimit.map((i: { period: string }) => (i.period)).join(',')
     }
-
 
     if (capInfo.capsClicksOverLimit) {
       if (clicksRedirectOfferUseDefault) {
         capInfo.exitTrafficClicks = true
-        await offerReferred(offer, offer.offerIdRedirectExitTraffic, 'capsClicksOverLimit', 'capsClicksOverLimitExitTraffic')
-
+        await offerReferred(
+          offer,
+          offer.offerIdRedirectExitTraffic,
+          IRedirectType.CAPS_CLICKS_OVER_LIMIT,
+          IRedirectReason.CAPS_CLICKS_OVER_LIMIT_EXIT_TRAFFIC
+        )
       } else {
         capInfo.capClicksRedirect = true
-        await offerReferred(offer, capRedirectId, 'capsClicksOverLimit', 'capsClicksOverLimitCapRedirect')
-
+        await offerReferred(
+          offer,
+          capRedirectId,
+          IRedirectType.CAPS_CLICKS_OVER_LIMIT,
+          IRedirectReason.CAPS_CLICKS_OVER_LIMIT_CAP_REDIRECT
+        )
       }
-
     }
 
     if (capInfo.capsSalesOverLimit) {
-
       if (salesRedirectOfferUseDefault) {
         capInfo.exitTrafficSales = true
-        await offerReferred(offer, offer.offerIdRedirectExitTraffic, 'capsSalesOverLimit', 'capsSalesOverLimitExitTraffic')
-
+        await offerReferred(
+          offer,
+          offer.offerIdRedirectExitTraffic,
+          IRedirectType.CAPS_SALES_OVER_LIMIT,
+          IRedirectReason.CAPS_SALES_OVER_LIMIT_EXIT_TRAFFIC)
       } else {
         capInfo.capSalesRedirect = true
-        await offerReferred(offer, capSalesRedirectOfferId, 'capsSalesOverLimit', 'capsSalesOverLimitCapRedirect')
-
+        await offerReferred(
+          offer,
+          capSalesRedirectOfferId,
+          IRedirectType.CAPS_SALES_OVER_LIMIT,
+          IRedirectReason.CAPS_SALES_OVER_LIMIT_CAP_REDIRECT)
       }
     }
 
@@ -215,7 +289,12 @@ export const reCalculateOfferCaps = async (offerId: number) => {
   }
 }
 
-const offerReferred = async (offer: IOffer, referredOfferId: number, redirectType: string, redirectReason: string) => {
+const offerReferred = async (
+  offer: IOffer,
+  referredOfferId: number,
+  redirectType: IRedirectType,
+  redirectReason: IRedirectReason
+) => {
   offer.landingPageUrlOrigin = offer.landingPageUrl || ''
   offer.offerIdOrigin = offer.offerId || 0
   offer.referredOfferId = referredOfferId || 0
