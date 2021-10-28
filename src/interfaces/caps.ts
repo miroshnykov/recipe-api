@@ -16,9 +16,13 @@ export interface ICapInfo {
   capClicksRedirect: boolean | null
   capSalesRedirect: boolean | null
   capsSalesUnderLimit: boolean | null
+  capsSalesUnderLimitDetails: string | null
   capsSalesOverLimit: boolean | null
+  capsSalesOverLimitDetails: string | null
   capsClicksUnderLimit: boolean | null
+  capsClicksUnderLimitDetails: string | null
   capsClicksOverLimit: boolean | null
+  capsClicksOverLimitDetails: string | null
   exitTrafficClicks: boolean | null
   exitTrafficSales: boolean | null
   currentDate: string | null
@@ -26,4 +30,10 @@ export interface ICapInfo {
   dateEnd: string | null
   dateRangePass: boolean | null
   dateRangeNotPassDescriptions: string | null
+}
+
+export interface ICapResult {
+  period: string
+  limit: number
+  currentAmount: number
 }
