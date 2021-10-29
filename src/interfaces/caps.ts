@@ -26,6 +26,7 @@ export interface ICapInfo {
   exitTrafficClicks: boolean | null
   exitTrafficSales: boolean | null
   currentDate: string | null
+  capsType: string | null
   dateStart: string | null
   dateEnd: string | null
   dateRangePass: boolean | null
@@ -37,3 +38,12 @@ export interface ICapResult {
   limit: number
   currentAmount: number
 }
+
+export enum ICapsType {
+  CAPS_DATA_RANGE_NOT_PASS = 'dataRangeNotPass',
+  CAPS_OVER_LIMIT_ClICKS = 'overLimitClicks',
+  CAPS_UNDER_LIMIT_ClICKS = 'underLimitClicks',
+  CAPS_OVER_LIMIT_SALES = 'overLimitSales',
+  CAPS_UNDER_LIMIT_SALES = 'underLimitSales',
+}
+
