@@ -196,7 +196,7 @@ export const reCalculateOfferCaps = async (offerId: number) => {
     ) {
       capInfo.capsSalesUnderLimit = true
       capInfo.capsSalesUnderLimitDetails = salesResultUnderLimit.map((i: { period: string }) => (i.period)).join(',')
-      capInfo.capsType = ICapsType.CAPS_UNDER_LIMIT_SALES
+      capInfo.capsType = ICapsType.CAPS_UNDER_LIMIT
     } else {
       capInfo.capsSalesUnderLimit = false
       capInfo.capsSalesUnderLimitDetails = salesResultUnderLimit.map((i: { period: string }) => (i.period)).join(',')
@@ -253,7 +253,7 @@ export const reCalculateOfferCaps = async (offerId: number) => {
     ) {
       capInfo.capsClicksUnderLimit = true
       capInfo.capsClicksUnderLimitDetails = clicksResultUnderLimit.map((i: { period: string }) => (i.period)).join(',')
-      capInfo.capsType = ICapsType.CAPS_UNDER_LIMIT_ClICKS
+      capInfo.capsType = ICapsType.CAPS_UNDER_LIMIT
     } else {
       capInfo.capsClicksUnderLimit = false
       capInfo.capsClicksUnderLimitDetails = clicksResultUnderLimit.map((i: { period: string }) => (i.period)).join(',')
