@@ -189,11 +189,21 @@ export const reCalculateOfferCaps = async (offerId: number) => {
       }
     })
 
-    if (salesResultUnderLimit.length !== 0 && salesResultUnderLimit.length === conditionsSetupSalesNotEmpty.length) {
+    if (salesResultUnderLimit.length !== 0
+      && salesResultUnderLimit.length === conditionsSetupSalesNotEmpty.length
+    ) {
       capInfo.capsSalesUnderLimit = true
       capInfo.capsSalesUnderLimitDetails = salesResultUnderLimit.map((i: { period: string }) => (i.period)).join(',')
     } else {
+      capInfo.capsSalesUnderLimit = false
+      capInfo.capsSalesUnderLimitDetails = salesResultUnderLimit.map((i: { period: string }) => (i.period)).join(',')
+    }
+
+    if (salesResultOverLimit.length !== 0) {
       capInfo.capsSalesOverLimit = true
+      capInfo.capsSalesOverLimitDetails = salesResultOverLimit.map((i: { period: string }) => (i.period)).join(',')
+    } else {
+      capInfo.capsSalesOverLimit = false
       capInfo.capsSalesOverLimitDetails = salesResultOverLimit.map((i: { period: string }) => (i.period)).join(',')
     }
 
@@ -235,11 +245,21 @@ export const reCalculateOfferCaps = async (offerId: number) => {
       }
     })
 
-    if (clicksResultUnderLimit.length !== 0 && clicksResultUnderLimit.length === conditionsSetupClicksNotEmpty.length) {
+    if (clicksResultUnderLimit.length !== 0
+      && clicksResultUnderLimit.length === conditionsSetupClicksNotEmpty.length
+    ) {
       capInfo.capsClicksUnderLimit = true
       capInfo.capsClicksUnderLimitDetails = clicksResultUnderLimit.map((i: { period: string }) => (i.period)).join(',')
     } else {
+      capInfo.capsClicksUnderLimit = false
+      capInfo.capsClicksUnderLimitDetails = clicksResultUnderLimit.map((i: { period: string }) => (i.period)).join(',')
+    }
+
+    if (clicksResultOverLimit.length !== 0) {
       capInfo.capsClicksOverLimit = true
+      capInfo.capsClicksOverLimitDetails = clicksResultOverLimit.map((i: { period: string }) => (i.period)).join(',')
+    } else {
+      capInfo.capsClicksOverLimit = false
       capInfo.capsClicksOverLimitDetails = clicksResultOverLimit.map((i: { period: string }) => (i.period)).join(',')
     }
 

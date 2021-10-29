@@ -17,6 +17,9 @@ import {
 import {sqsProcess} from "./sqs";
 
 import {influxdb} from "./metrics";
+import {ICampaign} from "./interfaces/campaigns";
+import {getCampaigns} from "./models/campaignsModel";
+import {IOffer} from "./interfaces/offers";
 
 const app: Application = express();
 const httpServer = createServer(app);
@@ -112,20 +115,29 @@ app.get('/fileSizeInfoRedis', async (req: Request, res: Response) => {
 
 })
 
-// app.get('/caps', async (req: Request, res: Response) => {
-//   try {
-//     // let offers:IOffer[] = await getOffers()||[]
-//     let caps = await reCalculateOfferCaps(35890)
-//     // let offer = await getOffer(19)
-//     res.json({
-//       // offer,
-//       caps
-//     })
-//   } catch (e) {
-//     res.json({err: e})
-//   }
-//
-// })
+app.get('/caps', async (req: Request, res: Response) => {
+  try {
+    // let offers:IOffer[] = await getOffers()||[]
+    let caps = await reCalculateOfferCaps(35904)
+    // let caps = await reCalculateOfferCaps(35899)
+    // let offer = await getOffer(19)
+    // const campaigns: ICampaign[] = await getCampaigns()
+    // const campaignsFormat: any = []
+    // for (const campaign of campaigns) {
+    //   // const reCalcCampaign = await reCalculateOffer(campaign)
+    //   // campaignsFormat.push(reCalcCampaign)
+    // }
+
+    // let caps =
+    res.json({
+       caps,
+      // campaignsFormat
+    })
+  } catch (e) {
+    res.json({err: e})
+  }
+
+})
 
 // app.get('/customPayot', async (req: Request, res: Response) => {
 //   try {
