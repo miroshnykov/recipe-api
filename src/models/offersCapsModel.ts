@@ -3,7 +3,7 @@ import {getAggregatedOffers, getCaps, getCustomPayoutPerGeo, getOffer} from "./o
 import {influxdb} from "../metrics";
 
 import {IOffer} from "../interfaces/offers"
-import {ICapInfo, ICapResult} from "../interfaces/caps"
+import {ICapInfo, ICapResult, ICapsType} from "../interfaces/caps"
 import {IRedirectReason, IRedirectType} from "../interfaces/recipeTypes";
 
 export const reCalculateOffer = async (offer: IOffer) => {
@@ -124,6 +124,7 @@ export const reCalculateOfferCaps = async (offerId: number) => {
       currentDate: null,
       dateRangePass: null,
       dateRangeNotPassDescriptions: null,
+      capsType: null,
       capsSalesUnderLimit: null,
       capsSalesUnderLimitDetails: null,
       capsSalesOverLimit: null,
@@ -146,6 +147,7 @@ export const reCalculateOfferCaps = async (offerId: number) => {
 
       if (!capInfo.dateRangePass) {
         capInfo.dateRangeNotPassDescriptions = `capsStartDate:${capsStartDate} capsEndDate:${capsEndDate}`
+        capInfo.capsType = ICapsType.CAPS_DATA_RANGE_NOT_PASS
         offer.capInfo = capInfo
         return offer
       }
@@ -194,6 +196,7 @@ export const reCalculateOfferCaps = async (offerId: number) => {
     ) {
       capInfo.capsSalesUnderLimit = true
       capInfo.capsSalesUnderLimitDetails = salesResultUnderLimit.map((i: { period: string }) => (i.period)).join(',')
+      capInfo.capsType = ICapsType.CAPS_UNDER_LIMIT_SALES
     } else {
       capInfo.capsSalesUnderLimit = false
       capInfo.capsSalesUnderLimitDetails = salesResultUnderLimit.map((i: { period: string }) => (i.period)).join(',')
@@ -250,6 +253,7 @@ export const reCalculateOfferCaps = async (offerId: number) => {
     ) {
       capInfo.capsClicksUnderLimit = true
       capInfo.capsClicksUnderLimitDetails = clicksResultUnderLimit.map((i: { period: string }) => (i.period)).join(',')
+      capInfo.capsType = ICapsType.CAPS_UNDER_LIMIT_ClICKS
     } else {
       capInfo.capsClicksUnderLimit = false
       capInfo.capsClicksUnderLimitDetails = clicksResultUnderLimit.map((i: { period: string }) => (i.period)).join(',')
@@ -281,6 +285,7 @@ export const reCalculateOfferCaps = async (offerId: number) => {
           IRedirectReason.CAPS_CLICKS_OVER_LIMIT_CAP_REDIRECT
         )
       }
+      capInfo.capsType = ICapsType.CAPS_OVER_LIMIT_ClICKS
     }
 
     if (capInfo.capsSalesOverLimit) {
@@ -299,6 +304,7 @@ export const reCalculateOfferCaps = async (offerId: number) => {
           IRedirectType.CAPS_SALES_OVER_LIMIT,
           IRedirectReason.CAPS_SALES_OVER_LIMIT_CAP_REDIRECT)
       }
+      capInfo.capsType = ICapsType.CAPS_OVER_LIMIT_SALES
     }
 
     offer.capInfo = capInfo
