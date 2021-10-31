@@ -3,7 +3,7 @@ import consola from "consola";
 import fileSystem from "fs";
 import {compressFile, deleteFile, memorySizeOfBite} from "../utils";
 import {getOffers, getAggregatedOffers} from "../models/offersModel";
-import {reCalculateOffer} from "../models/offersCapsModel";
+import {reCalculateOffer} from "../services/offersCaps";
 import {influxdb} from "../metrics";
 import {setFileSize} from "./setFileSize";
 import {IRecipeType} from "../interfaces/recipeTypes";

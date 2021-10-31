@@ -8,17 +8,13 @@ import {setOffersRecipe} from "./crons/offersRecipe"
 import {redis} from "./redis";
 import {setCampaignsRecipe} from "./crons/campaignsRecipe";
 import {encrypt, decrypt, getLocalFiles, getFileSize} from "./utils"
-import {getOffer, getOffers} from "./models/offersModel"
-
-import {
-  reCalculateOffer,
-  reCalculateOfferCaps
-} from "./models/offersCapsModel";
 import {sqsProcess} from "./sqs";
 
 import {influxdb} from "./metrics";
 import {ICampaign} from "./interfaces/campaigns";
 import {getCampaigns} from "./models/campaignsModel";
+import {reCalculateCampaignCaps} from "./services/campaignsCaps";
+import {reCalculateOfferCaps} from "./services/offersCaps";
 import {IOffer} from "./interfaces/offers";
 
 const app: Application = express();
@@ -121,22 +117,33 @@ app.get('/caps', async (req: Request, res: Response) => {
     let caps = await reCalculateOfferCaps(35904)
     // let caps = await reCalculateOfferCaps(35899)
     // let offer = await getOffer(19)
-    // const campaigns: ICampaign[] = await getCampaigns()
-    // const campaignsFormat: any = []
-    // for (const campaign of campaigns) {
-    //   // const reCalcCampaign = await reCalculateOffer(campaign)
-    //   // campaignsFormat.push(reCalcCampaign)
-    // }
-
-    // let caps =
     res.json({
-       caps,
-      // campaignsFormat
+      caps,
     })
   } catch (e) {
     res.json({err: e})
   }
+})
 
+app.get('/capsCampaigns', async (req: Request, res: Response) => {
+  try {
+    const campaigns: ICampaign[] = await getCampaigns()
+    const campaignsFormat: any = []
+    for (const campaign of campaigns) {
+      if (campaign.capsEnabled) {
+        const reCalcCampaign = await reCalculateCampaignCaps(campaign.campaignId)
+        campaignsFormat.push(reCalcCampaign)
+      } else {
+        campaignsFormat.push(campaign)
+      }
+    }
+
+    res.json({
+      campaignsFormat,
+    })
+  } catch (e) {
+    res.json({err: e})
+  }
 })
 
 // app.get('/customPayot', async (req: Request, res: Response) => {

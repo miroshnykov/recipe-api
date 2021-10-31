@@ -1,8 +1,9 @@
 import consola from "consola";
 
 import {getOffer} from "./models/offersModel";
-import {reCalculateOffer} from "./models/offersCapsModel";
+import {reCalculateOffer} from "./services/offersCaps";
 import {getCampaign} from "./models/campaignsModel";
+import {reCalculateCampaignCaps} from "./services/campaignsCaps";
 
 import AWS from 'aws-sdk'
 import * as dotenv from "dotenv";
@@ -53,13 +54,14 @@ export const sqsProcess = async () => {
         messages.push(generateOfferBody)
       } else if (messageBody.type === 'campaign' && messageBody.action === 'updateOrCreate') {
         let campaignInfo: ICampaign = await getCampaign(messageBody.id)
+        let reCalcCampaign: ICampaign | any[] = await reCalculateCampaignCaps(campaignInfo.campaignId)
         let generateCampaignBody: ISqsMessage = {
           comments: messageBody.comments,
           type: "campaign",
           id: messageBody.id,
           action: messageBody.action,
           timestamp: Date.now(),
-          body: `${JSON.stringify(campaignInfo)}`
+          body: `${JSON.stringify(reCalcCampaign)}`
         }
         influxdb(200, `sqs_campaign_update_or_create_${projectName}`)
         messages.push(generateCampaignBody)

@@ -1,59 +1,16 @@
-import consola from "consola";
-import {getAggregatedOffers, getCaps, getCustomPayoutPerGeo, getOffer} from "./offersModel";
+import {ICampaign} from "../interfaces/campaigns";
+import {ICapInfo, ICapResult, ICapsType} from "../interfaces/caps";
 import {influxdb} from "../metrics";
+import {getCampaign, getCampaignCaps} from "../models/campaignsModel";
 
-import {IOffer} from "../interfaces/offers"
-import {ICapInfo, ICapResult, ICapsType} from "../interfaces/caps"
-import {IRedirectReason, IRedirectType} from "../interfaces/recipeTypes";
-
-export const reCalculateOffer = async (offer: IOffer) => {
+export const reCalculateCampaignCaps = async (campaignId: number) => {
   try {
-    if (offer.type === 'aggregated') {
-      offer.offersAggregatedIds = await getAggregatedOffers(offer.offerId) || []
-      return offer
+    const campaign: ICampaign = await getCampaign(campaignId)
+    if (!campaign.capsEnabled) {
+      return campaign
     }
 
-    if (offer.capOfferId) {
-      let offerCaps = await reCalculateOfferCaps(offer.offerId)
-      if (offerCaps?.capSetup && offerCaps?.capInfo) {
-        offer.capInfo = offerCaps.capInfo
-        offer.capSetup = offerCaps.capSetup
-        offer.landingPageUrlOrigin = offerCaps.landingPageUrl
-        offer.offerIdOrigin = offerCaps.offerId
-        offer.referredOfferId = offerCaps.referredOfferId
-        offer.redirectType = offerCaps.redirectType
-        offer.redirectReason = offerCaps.redirectReason
-      }
-    }
-
-    if (offer.useStartEndDate) {
-      offer.startEndDateSetup = true
-      const currentDate = new Date()
-      offer.startEndDateSetting = {
-        startDate: offer.startDate,
-        endDate: offer.endDate,
-        dateRangePass: currentDate > offer.startDate && currentDate < offer.endDate
-      }
-    }
-
-    if (offer.customPayOutCount > 0) {
-      let customPayOutData = await getCustomPayoutPerGeo(offer.offerId)
-      offer.customPayOutPerGeo = JSON.stringify(customPayOutData)
-    }
-    offer.payin = Number(offer.payin)
-    offer.payout = Number(offer.payout)
-    return offer
-  } catch (e) {
-    consola.error('reCalculateOfferError:', e)
-    influxdb(500, `re_calculate_offer_error`)
-    return []
-  }
-}
-
-export const reCalculateOfferCaps = async (offerId: number) => {
-  try {
-    let offer: IOffer = await getOffer(offerId)
-    let offerCaps: any = await getCaps(offerId)
+    const campaignCaps: any = await getCampaignCaps(campaignId)
     const {
       clicksDaySetUpLimit,
       clicksWeekSetUpLimit,
@@ -61,20 +18,18 @@ export const reCalculateOfferCaps = async (offerId: number) => {
       clicksDayCurrent,
       clicksWeekCurrent,
       clicksMonthCurrent,
-      capRedirectId,
-      clicksRedirectOfferUseDefault,
+      clicksRedirectOfferId,
       salesDaySetUpLimit,
       salesWeekSetUpLimit,
       salesMonthSetupLimit,
       salesDayCurrent,
       salesWeekCurrent,
       salesMonthCurrent,
-      capSalesRedirectOfferId,
-      salesRedirectOfferUseDefault,
+      salesRedirectOfferId,
       capsStartDate,
-      capsEndDate,
-      useStartEndDate
-    } = offerCaps
+      capsEndDate
+    } = campaignCaps
+
 
     if (!clicksDaySetUpLimit
       && !clicksWeekSetUpLimit
@@ -83,11 +38,11 @@ export const reCalculateOfferCaps = async (offerId: number) => {
       && !salesWeekSetUpLimit
       && !salesMonthSetupLimit
     ) {
-      return offer
+      return campaign
     }
 
-    offer.capSetup = true
-    let capInfo: ICapInfo = {
+    campaign.capSetup = true
+    const capInfo: ICapInfo = {
       sales: {
         day: {
           current: 0,
@@ -117,10 +72,6 @@ export const reCalculateOfferCaps = async (offerId: number) => {
         }
       },
       dateRangeSetUp: null,
-      capClicksRedirect: null,
-      capSalesRedirect: null,
-      dateStart: null,
-      dateEnd: null,
       currentDate: null,
       dateRangePass: null,
       dateRangeNotPassDescriptions: null,
@@ -133,11 +84,9 @@ export const reCalculateOfferCaps = async (offerId: number) => {
       capsClicksUnderLimitDetails: null,
       capsClicksOverLimit: null,
       capsClicksOverLimitDetails: null,
-      exitTrafficSales: null,
-      exitTrafficClicks: null
     }
 
-    if (useStartEndDate && capsStartDate && capsEndDate) {
+    if (capsStartDate && capsEndDate) {
       capInfo.dateRangeSetUp = true
       capInfo.dateStart = capsStartDate
       capInfo.dateEnd = capsEndDate
@@ -147,9 +96,9 @@ export const reCalculateOfferCaps = async (offerId: number) => {
 
       if (!capInfo.dateRangePass) {
         capInfo.dateRangeNotPassDescriptions = `capsStartDate:${capsStartDate} capsEndDate:${capsEndDate}`
-        capInfo.capsType = ICapsType.CAPS_DATA_RANGE_NOT_PASS
-        offer.capInfo = capInfo
-        return offer
+        capInfo.capsType = ICapsType.CAPS_CAMPAIGN_DATA_RANGE_NOT_PASS
+        campaign.capInfo = capInfo
+        return campaign
       }
     }
 
@@ -196,7 +145,7 @@ export const reCalculateOfferCaps = async (offerId: number) => {
     ) {
       capInfo.capsSalesUnderLimit = true
       capInfo.capsSalesUnderLimitDetails = salesResultUnderLimit.map((i: { period: string }) => (i.period)).join(',')
-      capInfo.capsType = ICapsType.CAPS_UNDER_LIMIT
+      capInfo.capsType = ICapsType.CAPS_CAMPAIGN_UNDER_LIMIT
     } else {
       capInfo.capsSalesUnderLimit = false
       capInfo.capsSalesUnderLimitDetails = salesResultUnderLimit.map((i: { period: string }) => (i.period)).join(',')
@@ -253,7 +202,7 @@ export const reCalculateOfferCaps = async (offerId: number) => {
     ) {
       capInfo.capsClicksUnderLimit = true
       capInfo.capsClicksUnderLimitDetails = clicksResultUnderLimit.map((i: { period: string }) => (i.period)).join(',')
-      capInfo.capsType = ICapsType.CAPS_UNDER_LIMIT
+      capInfo.capsType = ICapsType.CAPS_CAMPAIGN_UNDER_LIMIT
     } else {
       capInfo.capsClicksUnderLimit = false
       capInfo.capsClicksUnderLimitDetails = clicksResultUnderLimit.map((i: { period: string }) => (i.period)).join(',')
@@ -267,63 +216,22 @@ export const reCalculateOfferCaps = async (offerId: number) => {
       capInfo.capsClicksOverLimitDetails = clicksResultOverLimit.map((i: { period: string }) => (i.period)).join(',')
     }
 
-    if (capInfo.capsClicksOverLimit) {
-      if (clicksRedirectOfferUseDefault) {
-        capInfo.exitTrafficClicks = true
-        await offerReferred(
-          offer,
-          offer.offerIdRedirectExitTraffic,
-          IRedirectType.CAPS_CLICKS_OVER_LIMIT,
-          IRedirectReason.CAPS_CLICKS_OVER_LIMIT_EXIT_TRAFFIC
-        )
-      } else {
-        capInfo.capClicksRedirect = true
-        await offerReferred(
-          offer,
-          capRedirectId,
-          IRedirectType.CAPS_CLICKS_OVER_LIMIT,
-          IRedirectReason.CAPS_CLICKS_OVER_LIMIT_CAP_REDIRECT
-        )
-      }
-      capInfo.capsType = ICapsType.CAPS_OVER_LIMIT_ClICKS
-    }
-
     if (capInfo.capsSalesOverLimit) {
-      if (salesRedirectOfferUseDefault) {
-        capInfo.exitTrafficSales = true
-        await offerReferred(
-          offer,
-          offer.offerIdRedirectExitTraffic,
-          IRedirectType.CAPS_SALES_OVER_LIMIT,
-          IRedirectReason.CAPS_SALES_OVER_LIMIT_EXIT_TRAFFIC)
-      } else {
-        capInfo.capSalesRedirect = true
-        await offerReferred(
-          offer,
-          capSalesRedirectOfferId,
-          IRedirectType.CAPS_SALES_OVER_LIMIT,
-          IRedirectReason.CAPS_SALES_OVER_LIMIT_CAP_REDIRECT)
-      }
-      capInfo.capsType = ICapsType.CAPS_OVER_LIMIT_SALES
+      capInfo.campaignCapsOfferIdRedirect = salesRedirectOfferId
+      capInfo.capsType = ICapsType.CAPS_CAMPAIGN_OVER_LIMIT_SALES
     }
 
-    offer.capInfo = capInfo
-    return offer
+    if (capInfo.capsClicksOverLimit) {
+      capInfo.campaignCapsOfferIdRedirect = clicksRedirectOfferId
+      capInfo.capsType = ICapsType.CAPS_CAMPAIGN_UNDER_LIMIT_ClICKS
+    }
+
+    campaign.capInfo = capInfo
+
+    return campaign
   } catch (e) {
     console.log(e)
-    influxdb(500, `re_calculate_offer_caps_error`)
+    influxdb(500, `re_calculate_campaign_caps_error`)
+    return []
   }
-}
-
-const offerReferred = async (
-  offer: IOffer,
-  referredOfferId: number,
-  redirectType: IRedirectType,
-  redirectReason: IRedirectReason
-) => {
-  offer.landingPageUrlOrigin = offer.landingPageUrl || ''
-  offer.offerIdOrigin = offer.offerId || 0
-  offer.referredOfferId = referredOfferId || 0
-  offer.redirectType = redirectType
-  offer.redirectReason = redirectReason
 }
