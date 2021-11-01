@@ -2,6 +2,7 @@ import JSONStream from "JSONStream";
 import consola from "consola";
 import fileSystem from "fs";
 import {getCampaigns} from "../models/campaignsModel";
+import {reCalculateCampaignCaps} from "../services/campaignsCaps";
 import {compressFile, deleteFile, memorySizeOfBite} from "../utils";
 import {influxdb} from "../metrics";
 import {setFileSize} from "./setFileSize";
@@ -13,7 +14,17 @@ import {getFileSize} from "./getFileSize";
 export const setCampaignsRecipe = async () => {
   try {
     const campaigns: ICampaign[] = await getCampaigns()
-    const sizeOfCampaignsDB: number = memorySizeOfBite(campaigns)
+    const campaignsFormat: any = []
+    for (const campaign of campaigns) {
+      if (campaign.capsEnabled) {
+        const reCalcCampaign = await reCalculateCampaignCaps(campaign.campaignId)
+        campaignsFormat.push(reCalcCampaign)
+      } else {
+        campaignsFormat.push(campaign)
+      }
+    }
+
+    const sizeOfCampaignsDB: number = memorySizeOfBite(campaignsFormat)
     consola.info(`Identify Size of Campaigns from DB Object:${sizeOfCampaignsDB}`)
     influxdb(200, `size_of_campaigns_db_${sizeOfCampaignsDB}`)
 
@@ -32,7 +43,7 @@ export const setCampaignsRecipe = async () => {
 
     transformStream.pipe(outputStream);
 
-    campaigns?.forEach(transformStream.write);
+    campaignsFormat?.forEach(transformStream.write);
 
     transformStream.end();
 
