@@ -147,7 +147,7 @@ export const reCalculateOfferCaps = async (offerId: number) => {
 
       if (!capInfo.dateRangePass) {
         capInfo.dateRangeNotPassDescriptions = `capsStartDate:${capsStartDate} capsEndDate:${capsEndDate}`
-        capInfo.capsType = ICapsType.CAPS_DATA_RANGE_NOT_PASS
+        capInfo.capsType = ICapsType.CAPS_OFFER_DATA_RANGE_NOT_PASS
         offer.capInfo = capInfo
         return offer
       }
@@ -196,7 +196,7 @@ export const reCalculateOfferCaps = async (offerId: number) => {
     ) {
       capInfo.capsSalesUnderLimit = true
       capInfo.capsSalesUnderLimitDetails = salesResultUnderLimit.map((i: { period: string }) => (i.period)).join(',')
-      capInfo.capsType = ICapsType.CAPS_UNDER_LIMIT
+      capInfo.capsType = ICapsType.CAPS_OFFER_UNDER_LIMIT
     } else {
       capInfo.capsSalesUnderLimit = false
       capInfo.capsSalesUnderLimitDetails = salesResultUnderLimit.map((i: { period: string }) => (i.period)).join(',')
@@ -253,7 +253,7 @@ export const reCalculateOfferCaps = async (offerId: number) => {
     ) {
       capInfo.capsClicksUnderLimit = true
       capInfo.capsClicksUnderLimitDetails = clicksResultUnderLimit.map((i: { period: string }) => (i.period)).join(',')
-      capInfo.capsType = ICapsType.CAPS_UNDER_LIMIT
+      capInfo.capsType = ICapsType.CAPS_OFFER_UNDER_LIMIT
     } else {
       capInfo.capsClicksUnderLimit = false
       capInfo.capsClicksUnderLimitDetails = clicksResultUnderLimit.map((i: { period: string }) => (i.period)).join(',')
@@ -273,19 +273,19 @@ export const reCalculateOfferCaps = async (offerId: number) => {
         await offerReferred(
           offer,
           offer.offerIdRedirectExitTraffic,
-          IRedirectType.CAPS_CLICKS_OVER_LIMIT,
-          IRedirectReason.CAPS_CLICKS_OVER_LIMIT_EXIT_TRAFFIC
+          IRedirectType.CAPS_OFFERS_CLICKS_OVER_LIMIT,
+          IRedirectReason.CAPS_OFFERS_CLICKS_OVER_LIMIT_EXIT_TRAFFIC
         )
       } else {
         capInfo.capClicksRedirect = true
         await offerReferred(
           offer,
           capRedirectId,
-          IRedirectType.CAPS_CLICKS_OVER_LIMIT,
-          IRedirectReason.CAPS_CLICKS_OVER_LIMIT_CAP_REDIRECT
+          IRedirectType.CAPS_OFFERS_CLICKS_OVER_LIMIT,
+          IRedirectReason.CAPS_OFFERS_CLICKS_OVER_LIMIT_CAP_REDIRECT
         )
       }
-      capInfo.capsType = ICapsType.CAPS_OVER_LIMIT_ClICKS
+      capInfo.capsType = ICapsType.CAPS_OFFER_OVER_LIMIT_ClICKS
     }
 
     if (capInfo.capsSalesOverLimit) {
@@ -294,17 +294,17 @@ export const reCalculateOfferCaps = async (offerId: number) => {
         await offerReferred(
           offer,
           offer.offerIdRedirectExitTraffic,
-          IRedirectType.CAPS_SALES_OVER_LIMIT,
-          IRedirectReason.CAPS_SALES_OVER_LIMIT_EXIT_TRAFFIC)
+          IRedirectType.CAPS_OFFERS_SALES_OVER_LIMIT,
+          IRedirectReason.CAPS_OFFERS_SALES_OVER_LIMIT_EXIT_TRAFFIC)
       } else {
         capInfo.capSalesRedirect = true
         await offerReferred(
           offer,
           capSalesRedirectOfferId,
-          IRedirectType.CAPS_SALES_OVER_LIMIT,
-          IRedirectReason.CAPS_SALES_OVER_LIMIT_CAP_REDIRECT)
+          IRedirectType.CAPS_OFFERS_SALES_OVER_LIMIT,
+          IRedirectReason.CAPS_OFFERS_SALES_OVER_LIMIT_CAP_REDIRECT)
       }
-      capInfo.capsType = ICapsType.CAPS_OVER_LIMIT_SALES
+      capInfo.capsType = ICapsType.CAPS_OFFER_OVER_LIMIT_SALES
     }
 
     offer.capInfo = capInfo

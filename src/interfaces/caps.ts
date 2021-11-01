@@ -41,15 +41,13 @@ export interface ICapResult {
 }
 
 export enum ICapsType {
-  CAPS_DATA_RANGE_NOT_PASS = 'dataRangeNotPass',
-  CAPS_OVER_LIMIT_ClICKS = 'overLimitClicks',
-  CAPS_UNDER_LIMIT_ClICKS = 'underLimitClicks',
-  CAPS_OVER_LIMIT_SALES = 'overLimitSales',
-  CAPS_UNDER_LIMIT_SALES = 'underLimitSales',
-  CAPS_UNDER_LIMIT = 'underLimit',
+  CAPS_OFFER_DATA_RANGE_NOT_PASS = 'offerDataRangeNotPass',
+  CAPS_OFFER_UNDER_LIMIT = 'offerUnderLimit',
+  CAPS_OFFER_OVER_LIMIT_ClICKS = 'offerOverLimitClicks',
+  CAPS_OFFER_OVER_LIMIT_SALES = 'offerOverLimitSales',
   CAPS_CAMPAIGN_DATA_RANGE_NOT_PASS = 'campaignCapsDataRangeNotPass',
   CAPS_CAMPAIGN_UNDER_LIMIT = 'campaignUnderLimit',
-  CAPS_CAMPAIGN_OVER_LIMIT_SALES = 'campaignOverLimitSales',
   CAPS_CAMPAIGN_UNDER_LIMIT_ClICKS = 'campaignUnderLimitClicks',
+  CAPS_CAMPAIGN_OVER_LIMIT_SALES = 'campaignOverLimitSales',
 }
 
