@@ -28,6 +28,7 @@ export interface IOffer {
   customPayOutCount: number
   capOfferId: number
   capSetup: boolean | undefined
+  capsEnabled: boolean | undefined
   startEndDateSetup: boolean | undefined
   startEndDateSetting: object
   customPayOutPerGeo: string

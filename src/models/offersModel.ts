@@ -81,7 +81,7 @@ export const getAggregatedOffers = async (id: number) => {
   }
 }
 
-export const getCaps = async (offerId: number) => {
+export const getOfferCaps = async (offerId: number) => {
   try {
     const conn: Pool = await connect();
     const capSql = `
@@ -179,7 +179,8 @@ export const getOffer = async (id: number) => {
                o.end_date                                                                    AS endDate,
                o.type                                                                        AS type,
                (SELECT COUNT(*) FROM sfl_offers_custom_payout p WHERE p.sfl_offer_id = o.id) AS customPayOutCount,
-               c.sfl_offer_id                                                                AS capOfferId
+               c.sfl_offer_id                                                                AS capOfferId,
+               c.enabled                                                                     AS capsEnabled
         FROM sfl_offers o
                  left join sfl_offer_landing_pages lp
                            ON lp.id = o.sfl_offer_landing_page_id

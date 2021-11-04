@@ -1,5 +1,5 @@
 import consola from "consola";
-import {getAggregatedOffers, getCaps, getCustomPayoutPerGeo, getOffer} from "../models/offersModel";
+import {getAggregatedOffers, getOfferCaps, getCustomPayoutPerGeo, getOffer} from "../models/offersModel";
 import {influxdb} from "../metrics";
 
 import {IOffer} from "../interfaces/offers"
@@ -13,7 +13,7 @@ export const reCalculateOffer = async (offer: IOffer) => {
       return offer
     }
 
-    if (offer.capOfferId) {
+    if (offer.capsEnabled) {
       let offerCaps = await reCalculateOfferCaps(offer.offerId)
       if (offerCaps?.capSetup && offerCaps?.capInfo) {
         offer.capInfo = offerCaps.capInfo
@@ -53,7 +53,10 @@ export const reCalculateOffer = async (offer: IOffer) => {
 export const reCalculateOfferCaps = async (offerId: number) => {
   try {
     let offer: IOffer = await getOffer(offerId)
-    let offerCaps: any = await getCaps(offerId)
+    if (!offer.capsEnabled) {
+      return offer
+    }
+    let offerCaps: any = await getOfferCaps(offerId)
     const {
       clicksDaySetUpLimit,
       clicksWeekSetUpLimit,
