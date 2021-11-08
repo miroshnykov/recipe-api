@@ -39,19 +39,34 @@ export const sqsProcess = async () => {
       const projectName = messageBody?.project || ''
       if (messageBody.type === 'offer' && messageBody.action === 'updateOrCreate') {
         let offer: IOffer = await getOffer(messageBody.id)
-        let reCalculatedOffer: IOffer | any[] = await reCalculateOffer(offer)
-        let generateOfferBody: ISqsMessage = {
-          comments: messageBody.comments,
-          type: "offer",
-          id: messageBody.id,
-          action: messageBody.action,
-          timestamp: Date.now(),
-          body: `${JSON.stringify(reCalculatedOffer)}`
+        if (offer.status === 'inactive') {
+          let generateOfferBodyForDelete: ISqsMessage = {
+            comments: 'offer status inactive, lets delete from recipe',
+            type: "offer",
+            id: messageBody.id,
+            action: 'delete',
+            timestamp: Date.now(),
+            body: ``
+          }
+
+          influxdb(200, `sqs_offer_inactive_${projectName}`)
+          messages.push(generateOfferBodyForDelete)
+        } else {
+          let reCalculatedOffer: IOffer | any[] = await reCalculateOffer(offer)
+          let generateOfferBody: ISqsMessage = {
+            comments: messageBody.comments,
+            type: "offer",
+            id: messageBody.id,
+            action: messageBody.action,
+            timestamp: Date.now(),
+            body: `${JSON.stringify(reCalculatedOffer)}`
+          }
+
+          // messages.push(JSON.parse(generateOfferBody))
+          influxdb(200, `sqs_offer_update_or_create_${projectName}`)
+          messages.push(generateOfferBody)
         }
 
-        // messages.push(JSON.parse(generateOfferBody))
-        influxdb(200, `sqs_offer_update_or_create_${projectName}`)
-        messages.push(generateOfferBody)
       } else if (messageBody.type === 'campaign' && messageBody.action === 'updateOrCreate') {
         let campaignInfo: ICampaign = await getCampaign(messageBody.id)
         let reCalcCampaign: ICampaign | any[] = await reCalculateCampaignCaps(campaignInfo.campaignId)

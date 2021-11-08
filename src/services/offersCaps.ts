@@ -53,6 +53,9 @@ export const reCalculateOffer = async (offer: IOffer) => {
 export const reCalculateOfferCaps = async (offerId: number) => {
   try {
     let offer: IOffer = await getOffer(offerId)
+    if (offer.status === 'inactive') {
+      return offer
+    }
     if (!offer.capsEnabled) {
       return offer
     }
