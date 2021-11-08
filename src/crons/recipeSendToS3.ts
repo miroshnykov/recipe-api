@@ -2,10 +2,10 @@ import fs from "fs";
 import AWS from 'aws-sdk'
 import consola from "consola";
 import {ManagedUpload} from "aws-sdk/lib/s3/managed_upload";
-import SendData = ManagedUpload.SendData;
 import * as dotenv from "dotenv";
 import {influxdb} from "../metrics";
 import {IRecipeType} from "../interfaces/recipeTypes";
+import SendData = ManagedUpload.SendData;
 
 dotenv.config();
 
@@ -23,12 +23,12 @@ export const uploadFileToS3Bucket = async (type: IRecipeType) => {
     let s3Key: string = ''
     let s3BucketName: string = ''
     switch (type) {
-      case 'offers':
+      case IRecipeType.OFFERS:
         tempFileName = process.env.OFFERS_RECIPE_PATH + '.gz' || ''
         s3Key = process.env.S3_OFFERS_RECIPE_PATH || ''
         s3BucketName = process.env.S3_BUCKET_NAME || ''
         break;
-      case 'campaigns':
+      case IRecipeType.CAMPAIGNS:
         tempFileName = process.env.CAMPAIGNS_RECIPE_PATH + '.gz' || ''
         s3Key = process.env.S3_CAMPAIGNS_RECIPE_PATH || ''
         s3BucketName = process.env.S3_BUCKET_NAME || ''

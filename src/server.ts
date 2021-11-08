@@ -16,6 +16,7 @@ import {getCampaigns} from "./models/campaignsModel";
 import {reCalculateCampaignCaps} from "./services/campaignsCaps";
 import {reCalculateOfferCaps} from "./services/offersCaps";
 import {IOffer} from "./interfaces/offers";
+import {ISqsMessage} from "./interfaces/sqsMessage";
 
 const app: Application = express();
 const httpServer = createServer(app);
@@ -210,9 +211,9 @@ io.on('connection', (socket: Socket) => {
 
   const sendUpdRedis = async () => {
     try {
-      let messages = await sqsProcess()
+      const messages: ISqsMessage[] = await sqsProcess()
 
-      if (!messages) return
+      if (messages.length === 0) return
       for (const message of messages) {
         // console.log(`send to socket ${socket.id} messageId:${message.id}, action:${message.action}, type:${message.type}`)
         consola.info(`send to socket ${socket.id}, message:${JSON.stringify(message)}`)

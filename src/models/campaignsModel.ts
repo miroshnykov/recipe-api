@@ -22,7 +22,7 @@ export const getCampaigns = async () => {
 --          and c.id in (998960, 49)
     `
     const [campaigns]: [any[], FieldPacket[]] = await conn.query(sql);
-    conn.end();
+    await conn.end();
 
     return campaigns
 
@@ -90,9 +90,9 @@ export const getCampaignCaps = async (id: number) => {
         WHERE c.id = ${id}
           AND cap.enabled = true
     `
-    const [campaign]: [any[], FieldPacket[]] = await conn.query(sql);
+    const [campaignCaps]: [any[], FieldPacket[]] = await conn.query(sql);
     await conn.end();
-    return campaign.length !== 0 ? campaign[0] : []
+    return campaignCaps.length !== 0 ? campaignCaps[0] : []
 
   } catch (e) {
     consola.error('getCampaignCapsError:', e)

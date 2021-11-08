@@ -58,6 +58,7 @@ export const getOffers = async () => {
   } catch (e) {
     consola.error('getOffersError:', e)
     influxdb(500, `get_offers_error`)
+    return []
   }
 }
 
@@ -92,7 +93,7 @@ export const getOfferCaps = async (offerId: number) => {
                c1.clicks_day                       AS clicksDayCurrent,
                c1.clicks_week                      AS clicksWeekCurrent,
                c1.clicks_month                     AS clicksMonthCurrent,
-               c.clicks_redirect_offer_id          AS capRedirectId,
+               c.clicks_redirect_offer_id          AS clicksRedirectOfferId,
                c.clicks_redirect_offer_use_default AS clicksRedirectOfferUseDefault,
                c.sales_day                         AS salesDaySetUpLimit,
                c.sales_week                        AS salesWeekSetUpLimit,
@@ -100,7 +101,7 @@ export const getOfferCaps = async (offerId: number) => {
                c1.sales_day                        AS salesDayCurrent,
                c1.sales_week                       AS salesWeekCurrent,
                c1.sales_month                      AS salesMonthCurrent,
-               c.sales_redirect_offer_id           AS capSalesRedirectOfferId,
+               c.sales_redirect_offer_id           AS salesRedirectOfferId,
                c.sales_redirect_offer_use_default  AS salesRedirectOfferUseDefault,
                c.start_date                        AS capsStartDate,
                c.end_date                          AS capsEndDate,

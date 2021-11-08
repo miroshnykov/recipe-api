@@ -13,11 +13,11 @@ import {getFileSize} from "./getFileSize";
 
 export const setOffersRecipe = async () => {
   try {
-    const offers: object | any = await getOffers()
+    const offers: IOffer[] = await getOffers()
 
-    const offerFormat: any = []
+    const offerFormat: IOffer[] = []
     for (const offer of offers) {
-      const reCalcOffer: IOffer | any[] = await reCalculateOffer(offer)
+      const reCalcOffer: IOffer = <IOffer>await reCalculateOffer(offer)
       offerFormat.push(reCalcOffer)
     }
 
