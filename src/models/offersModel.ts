@@ -49,6 +49,7 @@ export const getOffers = async () => {
                            ON v.id = o.sfl_vertical_id
                  left join sfl_offers_cap c
                            ON c.sfl_offer_id = o.id
+        WHERE o.status != 'inactive'
     `
     const [offers]: [any[], FieldPacket[]] = await conn.query(sql);
     await conn.end();
