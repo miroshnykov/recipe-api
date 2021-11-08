@@ -2,6 +2,7 @@ import {FieldPacket, Pool} from "mysql2/promise";
 import {connect} from "../db/mysql";
 import consola from "consola";
 import {influxdb} from "../metrics";
+import {IOffersMargin} from "../interfaces/offers";
 
 export const getOffers = async () => {
   try {
@@ -66,16 +67,44 @@ export const getAggregatedOffers = async (id: number) => {
   try {
     const conn: Pool = await connect();
     const sql = `
-        SELECT aggregatedOffers.aggregatedOfferId, aggregatedOffers.margin
-        FROM (SELECT m.sfl_offer_id AS aggregatedOfferId, o.payin - o.payout AS margin
-              FROM sfl_offers_aggregated m
-                       JOIN sfl_offers o ON o.id = m.sfl_offer_id
-              WHERE m.sfl_offer_aggregated_id = ${id}
-              ORDER BY o.payin - o.payout DESC) AS aggregatedOffers
+        SELECT m.sfl_offer_id AS aggregatedOfferId,
+               o.payin,
+               o.payout,
+               o.currency_id,
+               o.id,
+               (SELECT r.rate
+                FROM sfl_exchange_rate r
+                WHERE r.currency_id_from = o.currency_id
+                ORDER BY r.date_added DESC
+                                 LIMIT 1)     rate
+        FROM sfl_offers_aggregated m
+            JOIN sfl_offers o
+        ON o.id = m.sfl_offer_id
+        WHERE m.sfl_offer_aggregated_id = ${id}
+        ORDER BY o.payin - o.payout DESC
     `
     const [offersAggregated]: [any[], FieldPacket[]] = await conn.query(sql);
+
     await conn.end();
-    return offersAggregated
+
+    const calculateMargin: IOffersMargin[] = offersAggregated.map(i => {
+      let margin: number
+      if (i.rate) {
+        const payInEx: number = Number(i.payin) * Number(i.rate)
+        const payOutEx: number = Number(i.payout) * Number(i.rate)
+        margin = Math.round((payInEx - payOutEx + Number.EPSILON) * 100) / 100;
+      } else {
+        margin = Math.round((Number(i.payin) - Number(i.payout) + Number.EPSILON) * 100) / 100;
+      }
+      const aggregatedOfferId: number = i.aggregatedOfferId
+
+      return {
+        aggregatedOfferId,
+        margin
+      }
+    })
+
+    return calculateMargin.sort((a: IOffersMargin, b: IOffersMargin) => (a.margin > b.margin) ? -1 : 1)
   } catch (e) {
     consola.error(e)
     influxdb(500, `get_aggregated_offer_error`)
@@ -110,8 +139,9 @@ export const getOfferCaps = async (offerId: number) => {
                  join sfl_offers_cap c
                       ON c.sfl_offer_id = o.id
                  left join sfl_offers_cap_current_data c1
-                      ON c1.sfl_offer_id = o.id
-        WHERE o.id = ${offerId} AND c.enabled = true
+                           ON c1.sfl_offer_id = o.id
+        WHERE o.id = ${offerId}
+          AND c.enabled = true
     `
     const [offerCaps]: [any[], FieldPacket[]] = await conn.query(capSql)
     await conn.end();
