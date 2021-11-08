@@ -41,3 +41,7 @@ export interface IOffer {
   redirectReason: string | undefined
 }
 
+export interface IOffersMargin {
+  aggregatedOfferId: number,
+  margin: number
+}
