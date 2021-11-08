@@ -14,10 +14,10 @@ import {getFileSize} from "./getFileSize";
 export const setCampaignsRecipe = async () => {
   try {
     const campaigns: ICampaign[] = await getCampaigns()
-    const campaignsFormat: any = []
+    let campaignsFormat: ICampaign[] = []
     for (const campaign of campaigns) {
       if (campaign.capsEnabled) {
-        const reCalcCampaign = await reCalculateCampaignCaps(campaign.campaignId)
+        const reCalcCampaign: ICampaign = <ICampaign>await reCalculateCampaignCaps(campaign.campaignId)
         campaignsFormat.push(reCalcCampaign)
       } else {
         campaignsFormat.push(campaign)

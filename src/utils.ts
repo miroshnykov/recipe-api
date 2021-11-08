@@ -99,8 +99,7 @@ export const getLocalFiles = (localFolder: string): Promise<string[]> => {
   })
 
 };
-
-export const memorySizeOfBite = (obj: any) => {
+export const memorySizeOfBite = <T extends object>(obj: T): number => {
   let bytes: number = 0;
 
   const sizeOf = (obj: any) => {

@@ -25,13 +25,35 @@ export interface ICapInfo {
   capsClicksOverLimitDetails: string | null
   exitTrafficClicks?: boolean | null
   exitTrafficSales?: boolean | null
-  currentDate: string | null
+  currentDate: Date | null
   capsType?: ICapsType | null
-  dateStart?: string | null
-  dateEnd?: string | null
+  dateStart?: Date | null
+  dateEnd?: Date | null
   dateRangePass: boolean | null
   dateRangeNotPassDescriptions: string | null
   campaignCapsOfferIdRedirect?: number | null
+}
+
+export interface ICaps {
+  clicksDaySetUpLimit: number
+  clicksWeekSetUpLimit: number
+  clicksMonthSetupLimit: number
+  clicksDayCurrent: number
+  clicksWeekCurrent: number
+  clicksMonthCurrent: number
+  clicksRedirectOfferId: number
+  clicksRedirectOfferUseDefault?: number
+  salesDaySetUpLimit: number
+  salesWeekSetUpLimit: number
+  salesMonthSetupLimit: number
+  salesDayCurrent: number
+  salesWeekCurrent: number
+  salesMonthCurrent: number
+  salesRedirectOfferId: number
+  salesRedirectOfferUseDefault?: number
+  capsStartDate: Date
+  capsEndDate: Date
+  useStartEndDate?: Date
 }
 
 export interface ICapResult {

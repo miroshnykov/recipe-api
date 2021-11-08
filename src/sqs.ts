@@ -29,7 +29,7 @@ export const sqsProcess = async () => {
   try {
     let dataQueue = await receiveMessage()
     if (!dataQueue?.Messages) {
-      return
+      return []
     }
     let messages = []
     for (const message of dataQueue.Messages) {
@@ -76,6 +76,7 @@ export const sqsProcess = async () => {
   } catch (e) {
     influxdb(500, `sqs_receive_message_error`)
     consola.error('receiveMessageError:', e)
+    return []
   }
 
 }

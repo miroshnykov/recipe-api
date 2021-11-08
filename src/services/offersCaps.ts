@@ -3,7 +3,7 @@ import {getAggregatedOffers, getOfferCaps, getCustomPayoutPerGeo, getOffer} from
 import {influxdb} from "../metrics";
 
 import {IOffer} from "../interfaces/offers"
-import {ICapInfo, ICapResult, ICapsType} from "../interfaces/caps"
+import {ICapInfo, ICapResult, ICaps, ICapsType} from "../interfaces/caps"
 import {IRedirectReason, IRedirectType} from "../interfaces/recipeTypes";
 
 export const reCalculateOffer = async (offer: IOffer) => {
@@ -56,7 +56,7 @@ export const reCalculateOfferCaps = async (offerId: number) => {
     if (!offer.capsEnabled) {
       return offer
     }
-    let offerCaps: any = await getOfferCaps(offerId)
+    let offerCaps: ICaps = await getOfferCaps(offerId)
     const {
       clicksDaySetUpLimit,
       clicksWeekSetUpLimit,
@@ -64,7 +64,7 @@ export const reCalculateOfferCaps = async (offerId: number) => {
       clicksDayCurrent,
       clicksWeekCurrent,
       clicksMonthCurrent,
-      capRedirectId,
+      clicksRedirectOfferId,
       clicksRedirectOfferUseDefault,
       salesDaySetUpLimit,
       salesWeekSetUpLimit,
@@ -72,7 +72,7 @@ export const reCalculateOfferCaps = async (offerId: number) => {
       salesDayCurrent,
       salesWeekCurrent,
       salesMonthCurrent,
-      capSalesRedirectOfferId,
+      salesRedirectOfferId,
       salesRedirectOfferUseDefault,
       capsStartDate,
       capsEndDate,
@@ -283,7 +283,7 @@ export const reCalculateOfferCaps = async (offerId: number) => {
         capInfo.capClicksRedirect = true
         await offerReferred(
           offer,
-          capRedirectId,
+          clicksRedirectOfferId,
           IRedirectType.CAPS_OFFERS_CLICKS_OVER_LIMIT,
           IRedirectReason.CAPS_OFFERS_CLICKS_OVER_LIMIT_CAP_REDIRECT
         )
@@ -303,7 +303,7 @@ export const reCalculateOfferCaps = async (offerId: number) => {
         capInfo.capSalesRedirect = true
         await offerReferred(
           offer,
-          capSalesRedirectOfferId,
+          salesRedirectOfferId,
           IRedirectType.CAPS_OFFERS_SALES_OVER_LIMIT,
           IRedirectReason.CAPS_OFFERS_SALES_OVER_LIMIT_CAP_REDIRECT)
       }

@@ -1,5 +1,5 @@
 import {ICampaign} from "../interfaces/campaigns";
-import {ICapInfo, ICapResult, ICapsType} from "../interfaces/caps";
+import {ICapInfo, ICapResult, ICaps, ICapsType} from "../interfaces/caps";
 import {influxdb} from "../metrics";
 import {getCampaign, getCampaignCaps} from "../models/campaignsModel";
 
@@ -10,7 +10,7 @@ export const reCalculateCampaignCaps = async (campaignId: number) => {
       return campaign
     }
 
-    const campaignCaps: any = await getCampaignCaps(campaignId)
+    const campaignCaps: ICaps = await getCampaignCaps(campaignId)
     const {
       clicksDaySetUpLimit,
       clicksWeekSetUpLimit,
