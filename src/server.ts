@@ -17,6 +17,8 @@ import {reCalculateCampaignCaps} from "./services/campaignsCaps";
 import {reCalculateOfferCaps} from "./services/offersCaps";
 import {IOffer} from "./interfaces/offers";
 import {ISqsMessage} from "./interfaces/sqsMessage";
+import {getOffers, getAggregatedOffers} from "./models/offersModel";
+import {testLinksCampaigns, testLinksOffers} from "./tests/links";
 
 const app: Application = express();
 const httpServer = createServer(app);
@@ -147,6 +149,18 @@ app.get('/capsCampaigns', async (req: Request, res: Response) => {
   }
 })
 
+app.get('/link', async (req: Request, res: Response) => {
+  try {
+    setTimeout(testLinksOffers, 10000) // 10000 -> 10s
+    setTimeout(testLinksCampaigns, 20000) // 20000 -> 20s
+    res.json("added to queue testLinksOffers  testLinksCampaigns")
+
+  } catch (e) {
+    res.json({err: e})
+  }
+})
+
+
 // app.get('/customPayot', async (req: Request, res: Response) => {
 //   try {
 //     let offers: object | any = await getOffers()
@@ -243,6 +257,10 @@ setInterval(setOffersRecipe, 312000) // 312000 -> 5.2 min
 
 setTimeout(setCampaignsRecipe, 20000) // 20000 -> 6 sec
 setTimeout(setOffersRecipe, 10000) // 10000 -> 10 sec
+
+setInterval(testLinksOffers, 28800000) // 28800000 -> 8h
+setInterval(testLinksCampaigns, 25200000) // 25200000 -> 7h
+
 
 httpServer.listen(port, host, (): void => {
   consola.success(`server is running on http://${host}:${port}`)
