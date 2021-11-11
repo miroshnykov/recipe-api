@@ -216,14 +216,14 @@ export const reCalculateCampaignCaps = async (campaignId: number) => {
       capInfo.capsClicksOverLimitDetails = clicksResultOverLimit.map((i: { period: string }) => (i.period)).join(',')
     }
 
-    if (capInfo.capsSalesOverLimit) {
-      capInfo.campaignCapsOfferIdRedirect = salesRedirectOfferId
-      capInfo.capsType = ICapsType.CAPS_CAMPAIGN_OVER_LIMIT_SALES
-    }
-
-    if (capInfo.capsClicksOverLimit) {
+    if (capInfo.capsClicksUnderLimit) {
       capInfo.campaignCapsOfferIdRedirect = clicksRedirectOfferId
       capInfo.capsType = ICapsType.CAPS_CAMPAIGN_UNDER_LIMIT_ClICKS
+    }
+
+    if (capInfo.capsSalesUnderLimit) {
+      capInfo.campaignCapsOfferIdRedirect = salesRedirectOfferId
+      capInfo.capsType = ICapsType.CAPS_CAMPAIGN_UNDER_LIMIT_SALES
     }
 
     campaign.capInfo = capInfo
