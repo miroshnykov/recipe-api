@@ -70,6 +70,7 @@ export enum ICapsType {
   CAPS_CAMPAIGN_DATA_RANGE_NOT_PASS = 'campaignCapsDataRangeNotPass',
   CAPS_CAMPAIGN_UNDER_LIMIT = 'campaignUnderLimit',
   CAPS_CAMPAIGN_UNDER_LIMIT_ClICKS = 'campaignUnderLimitClicks',
+  CAPS_CAMPAIGN_UNDER_LIMIT_SALES = 'campaignUnderLimitSales',
   CAPS_CAMPAIGN_OVER_LIMIT_SALES = 'campaignOverLimitSales',
 }
 
