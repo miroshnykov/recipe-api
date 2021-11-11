@@ -2,6 +2,8 @@ FROM node:14.17-alpine3.14
 
 RUN apk add --no-cache redis curl
 
+RUN mkdir /tmp/co-recipe && chmod 755 /tmp
+
 WORKDIR /home/app
 
 COPY . .
