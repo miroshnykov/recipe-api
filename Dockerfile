@@ -6,7 +6,7 @@ WORKDIR /home/app
 
 COPY . .
 
-RUN RUN npm install && npm run build && npm prune --production && npm install --production
+RUN npm install && npm run build && npm prune --production && npm install --production
 
 EXPOSE 80
 
