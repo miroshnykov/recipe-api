@@ -42,6 +42,11 @@ export interface IOffer {
 }
 
 export interface IOffersMargin {
-  aggregatedOfferId: number,
+  capsOverLimitSales?: boolean
+  capsOverLimitClicks?: boolean
+  dateRangeNotPass?: boolean
+  countriesRestrictions?: string
+  customLpCountriesRestrictions?: string
+  aggregatedOfferId: number
   margin: number
 }

@@ -2,7 +2,8 @@ import {FieldPacket, Pool} from "mysql2/promise";
 import {connect} from "../db/mysql";
 import consola from "consola";
 import {influxdb} from "../metrics";
-import {IOffersMargin} from "../interfaces/offers";
+import {IOffer, IOffersMargin} from "../interfaces/offers";
+import {reCalculateOffer} from "../services/offersCaps";
 
 export const getOffers = async () => {
   try {
@@ -105,7 +106,45 @@ export const getAggregatedOffers = async (id: number) => {
       }
     })
 
-    return calculateMargin.sort((a: IOffersMargin, b: IOffersMargin) => (a.margin > b.margin) ? -1 : 1)
+    let formatOffers = calculateMargin.sort((a: IOffersMargin, b: IOffersMargin) => (a.margin > b.margin) ? -1 : 1)
+    for (let offer of formatOffers) {
+      let offerInfo_: IOffer = await getOffer(offer.aggregatedOfferId)
+      let offerInfo = await reCalculateOffer(offerInfo_)
+
+      if ("capsEnabled" in offerInfo && offerInfo?.capsEnabled!) {
+        if (offerInfo?.capInfo?.capsSalesOverLimit) {
+          offer.capsOverLimitSales = offerInfo?.capInfo?.capsSalesOverLimit
+        }
+        if (offerInfo?.capInfo?.capsClicksOverLimit) {
+          offer.capsOverLimitClicks = offerInfo?.capInfo?.capsClicksOverLimit
+        }
+      }
+
+      if ("startEndDateSetup" in offerInfo && offerInfo.startEndDateSetup) {
+        // @ts-ignore
+        if (!offerInfo.startEndDateSetting.dateRangePass) {
+          offer.dateRangeNotPass = true
+        }
+      }
+
+      const geoRules = JSON.parse(offerInfo_.geoRules)
+      if (geoRules.geo) {
+        const countriesList = geoRules?.geo?.map((i: { country: string; }) => (i.country))
+        if (countriesList.length !== 0) {
+          offer.countriesRestrictions = countriesList.join(',')
+        }
+      }
+
+      const customLpRules = JSON.parse(offerInfo_.customLpRules)
+      if (customLpRules) {
+        const customLpCountriesList = customLpRules.customLPRules.map((i: { country: string; }) => (i.country))
+        if (customLpCountriesList.length !== 0) {
+          offer.customLpCountriesRestrictions = customLpCountriesList.join(',')
+        }
+      }
+    }
+
+    return formatOffers
   } catch (e) {
     consola.error(e)
     influxdb(500, `get_aggregated_offer_error`)
