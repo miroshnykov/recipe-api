@@ -1,4 +1,4 @@
-FROM node:14.17-alpine3.14 AS build
+FROM node:14.17-alpine3.14 AS builder
 
 WORKDIR /app
 
@@ -10,7 +10,7 @@ RUN npm install \
     && npm prune --production \
     && npm install --production \
     && rm -rf src \
-    && rm -f .npmrc \
+    && rm -f .npmrc
 
 FROM node:14.17-alpine3.14
 
@@ -22,7 +22,7 @@ RUN mkdir /tmp/recipe && chmod 755 /tmp
 
 WORKDIR /app
 
-COPY --from=build /app .
+COPY --from=builder /app .
 
 EXPOSE 80
 
