@@ -10,6 +10,9 @@ import {IRecipeType} from "../interfaces/recipeTypes";
 import {ICampaign} from "../interfaces/campaigns";
 import {uploadFileToS3Bucket} from "./recipeSendToS3";
 import {getFileSize} from "./getFileSize";
+import os from "os"
+
+const computerName = os.hostname()
 
 export const setCampaignsRecipe = async () => {
   try {
@@ -26,7 +29,7 @@ export const setCampaignsRecipe = async () => {
 
     const sizeOfCampaignsDB: number = memorySizeOfBite(campaignsFormat)
     consola.info(`Identify Size of Campaigns from DB Object:${sizeOfCampaignsDB}`)
-    influxdb(200, `size_of_campaigns_db_${sizeOfCampaignsDB}`)
+    influxdb(200, `size_of_campaigns_db_${sizeOfCampaignsDB}_${computerName}`)
 
     const sizeOfCampaignsRedis: number = await getFileSize(IRecipeType.CAMPAIGNS)
     consola.info(`Identify Size of Campaigns from Redis:${sizeOfCampaignsRedis}`)
@@ -53,7 +56,7 @@ export const setCampaignsRecipe = async () => {
 
         await compressFile(filePath!)
         await deleteFile(filePath!)
-        influxdb(200, `recipe_campaigns_created`)
+        influxdb(200, `recipe_campaigns_created_${computerName}`)
         consola.success(`File Campaigns (count:${campaigns?.length}) created path:${filePath} `)
       }
     )
@@ -61,7 +64,7 @@ export const setCampaignsRecipe = async () => {
     setTimeout(setFileSize, 20000, IRecipeType.CAMPAIGNS, sizeOfCampaignsDB)  // 20000 -> 20 sec
 
   } catch (e) {
-    influxdb(500, `recipe_campaigns_create_error`)
+    influxdb(500, `recipe_campaigns_create_error_${computerName}`)
     consola.error('create campaign recipe Error:', e)
   }
 }
