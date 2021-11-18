@@ -32,7 +32,7 @@ export const recalculateRecipe = async (message: any) => {
   }
 }
 
-const offerReCalculate = async (messageBody: any) => {
+const offerReCalculate = async (messageBody: ISqsMessage) => {
   let messageResponse = []
 
   switch (messageBody.action) {
