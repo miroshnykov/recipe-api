@@ -65,6 +65,25 @@ export const getOffers = async () => {
   }
 }
 
+export const findAggregatedOffer = async (offerId: number) => {
+  try {
+    const conn: Pool = await connect();
+    const aggregatedOfferSql = `
+        SELECT aggr.sfl_offer_aggregated_id
+        FROM sfl_offers_aggregated aggr
+        WHERE sfl_offer_id = ${offerId}
+    `
+
+    const [aggregatedOfferData]: [any[], FieldPacket[]] = await conn.query(aggregatedOfferSql)
+    await conn.end();
+
+    return aggregatedOfferData.length !== 0 && aggregatedOfferData[0] || {}
+  } catch (e) {
+    consola.error('capsErr:', e)
+    influxdb(500, `find_aggregated_offer_error`)
+  }
+}
+
 export const getAggregatedOffers = async (id: number) => {
   try {
     const conn: Pool = await connect();

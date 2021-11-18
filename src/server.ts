@@ -223,14 +223,14 @@ io.on('connection', (socket: Socket) => {
   })
   let updRedis: any = []
 
-  const sendUpdRedis = async () => {
+  const sendUpdRecipe = async () => {
     try {
-      const messages: ISqsMessage[] = await sqsProcess()
+      const messages = await sqsProcess()
 
       if (messages.length === 0) return
       for (const message of messages) {
-        // console.log(`send to socket ${socket.id} messageId:${message.id}, action:${message.action}, type:${message.type}`)
-        consola.info(`send to socket ${socket.id}, message:${JSON.stringify(message)}`)
+        // consola.info(`send to socket ${socket.id}, message:${JSON.stringify(message)}`)
+        consola.info(`send to socket ${socket.id}, ${message.type}ID:${message.id}, action:${message.action}, comments:${message.comments} `)
         io.sockets.emit("updRecipe", message)
       }
 
@@ -240,7 +240,7 @@ io.on('connection', (socket: Socket) => {
     }
   }
 
-  updRedis[socket.id] = setInterval(sendUpdRedis, 30000) // 30 sec
+  updRedis[socket.id] = setInterval(sendUpdRecipe, 30000) // 30 sec
 
   socket.on('disconnect', () => {
     clearInterval(updRedis[socket.id])
