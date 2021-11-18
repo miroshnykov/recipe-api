@@ -1,8 +1,19 @@
 export interface ISqsMessage {
   comments: string,
-  type: string
+  type: ISqsMessageType
   id: number
-  action: string
+  action: ISqsMessageAction
   timestamp: number
   body: string
+  project?: string
+}
+
+export enum ISqsMessageType {
+  OFFER = 'offer',
+  CAMPAIGN = 'campaign'
+}
+
+export enum ISqsMessageAction {
+  UPDATE_OR_CREATE = 'updateOrCreate',
+  DELETE = 'delete'
 }

@@ -11,6 +11,7 @@ import {influxdb} from "./metrics";
 import {IOffer} from "./interfaces/offers";
 import {ICampaign} from "./interfaces/campaigns";
 import {ISqsMessage} from "./interfaces/sqsMessage";
+import {recalculateRecipe} from "./services/recalculateRecipe";
 
 dotenv.config();
 
@@ -33,59 +34,10 @@ export const sqsProcess = async () => {
     }
     let messages = []
     for (const message of dataQueue.Messages) {
-
-      let messageBody = JSON.parse(message.Body!)
-      //  TODO move this logic to right place
-      const projectName = messageBody?.project || ''
-      if (messageBody.type === 'offer' && messageBody.action === 'updateOrCreate') {
-        let offer: IOffer = await getOffer(messageBody.id)
-        if (offer.status === 'inactive') {
-          let generateOfferBodyForDelete: ISqsMessage = {
-            comments: 'offer status inactive, lets delete from recipe',
-            type: "offer",
-            id: messageBody.id,
-            action: 'delete',
-            timestamp: Date.now(),
-            body: ``
-          }
-
-          influxdb(200, `sqs_offer_inactive_${projectName}`)
-          messages.push(generateOfferBodyForDelete)
-        } else {
-          let reCalculatedOffer: IOffer | any[] = await reCalculateOffer(offer)
-          let generateOfferBody: ISqsMessage = {
-            comments: messageBody.comments,
-            type: "offer",
-            id: messageBody.id,
-            action: messageBody.action,
-            timestamp: Date.now(),
-            body: `${JSON.stringify(reCalculatedOffer)}`
-          }
-
-          // messages.push(JSON.parse(generateOfferBody))
-          influxdb(200, `sqs_offer_update_or_create_${projectName}`)
-          messages.push(generateOfferBody)
-        }
-
-      } else if (messageBody.type === 'campaign' && messageBody.action === 'updateOrCreate') {
-        let campaignInfo: ICampaign = await getCampaign(messageBody.id)
-        let reCalcCampaign: ICampaign | any[] = await reCalculateCampaignCaps(campaignInfo.campaignId)
-        let generateCampaignBody: ISqsMessage = {
-          comments: messageBody.comments,
-          type: "campaign",
-          id: messageBody.id,
-          action: messageBody.action,
-          timestamp: Date.now(),
-          body: `${JSON.stringify(reCalcCampaign)}`
-        }
-        influxdb(200, `sqs_campaign_update_or_create_${projectName}`)
-        messages.push(generateCampaignBody)
-      } else {
-        influxdb(200, `sqs_offer_campaign_delete`)
-        messages.push(messageBody)
+      const messagesUpd = await recalculateRecipe(message)
+      for (const messageUpd of messagesUpd) {
+        messages.push(messageUpd)
       }
-
-      await deleteMessage(message.ReceiptHandle!)
     }
     return messages
   } catch (e) {
@@ -113,7 +65,7 @@ const receiveMessage = async () => {
     })
 }
 
-const deleteMessage = async (messageId: string) => {
+export const deleteMessage = async (messageId: string) => {
 
   let params = {
     QueueUrl: queueUrl,

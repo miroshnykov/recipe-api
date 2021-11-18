@@ -10,7 +10,7 @@ export interface IOffer {
   advertiserManagerId: number
   conversionType: string
   currencyId: number
-  status: string
+  status: IOfferStatus
   payin: number
   payout: number
   isCpmOptionEnabled: boolean
@@ -49,4 +49,12 @@ export interface IOffersMargin {
   customLpCountriesRestrictions?: string
   aggregatedOfferId: number
   margin: number
+}
+
+export enum IOfferStatus {
+  INACTIVE = 'inactive',
+  PUBLIC = 'public',
+  PRIVATE = 'private',
+  APPLY_TO_RUN = 'apply_to_run',
+  PENDING = 'pending',
 }
