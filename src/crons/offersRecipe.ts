@@ -10,6 +10,9 @@ import {IRecipeType} from "../interfaces/recipeTypes";
 import {IOffer} from "../interfaces/offers";
 import {uploadFileToS3Bucket} from "./recipeSendToS3";
 import {getFileSize} from "./getFileSize";
+import os from "os"
+
+const computerName = os.hostname()
 
 export const setOffersRecipe = async () => {
   try {
@@ -23,7 +26,7 @@ export const setOffersRecipe = async () => {
 
     const sizeOfOffersDB: number = memorySizeOfBite(offerFormat)
     consola.info(`Identify Size of Offers Object:${sizeOfOffersDB}`)
-    influxdb(200, `size_of_offers_db_${sizeOfOffersDB}`)
+    influxdb(200, `size_of_offers_db_${sizeOfOffersDB}_${computerName}`)
 
     const sizeOfOffersRedis: number = await getFileSize(IRecipeType.OFFERS)
     consola.info(`Identify Size of Offers from Redis:${sizeOfOffersRedis}`)
@@ -51,7 +54,7 @@ export const setOffersRecipe = async () => {
 
         await compressFile(filePath!)
         await deleteFile(filePath!)
-        influxdb(200, `recipe_offers_created`)
+        influxdb(200, `recipe_offers_created_${computerName}`)
         consola.success(`File Offers(count:${offerFormat?.length}) created path:${filePath} `)
       }
     )
@@ -59,7 +62,7 @@ export const setOffersRecipe = async () => {
     setTimeout(setFileSize, 10000, IRecipeType.OFFERS, sizeOfOffersDB)
 
   } catch (e) {
-    influxdb(500, `recipe_offers_create_error`)
+    influxdb(500, `recipe_offers_create_error_${computerName}`)
     consola.error('create offers recipe Error:', e)
   }
 
