@@ -60,6 +60,7 @@ const offerUpdateOrCreate = async (messageBody: ISqsMessage) => {
         comments: 'offer status inactive, lets delete from recipe',
         type: ISqsMessageType.OFFER,
         id: messageBody.id,
+        project: messageBody.project || '',
         action: ISqsMessageAction.DELETE,
         timestamp: Date.now(),
         body: ``
@@ -78,6 +79,7 @@ const offerUpdateOrCreate = async (messageBody: ISqsMessage) => {
         type: ISqsMessageType.OFFER,
         id: messageBody.id,
         action: messageBody.action,
+        project: messageBody.project || '',
         timestamp: Date.now(),
         body: `${JSON.stringify(reCalculatedOffer)}`
       }
@@ -97,6 +99,7 @@ const offerUpdateOrCreate = async (messageBody: ISqsMessage) => {
           id: findAgg.sfl_offer_aggregated_id,
           action: ISqsMessageAction.UPDATE_OR_CREATE,
           timestamp: Date.now(),
+          project: messageBody.project || '',
           body: `${JSON.stringify(reCalculateAggregatedOffer)}`
         }
         influxdb(200, `sqs_offer_update_aggregated_${projectName}`)
@@ -121,6 +124,7 @@ const campaignReCalculate = async (messageBody: ISqsMessage) => {
         type: ISqsMessageType.CAMPAIGN,
         id: messageBody.id,
         action: messageBody.action,
+        project: messageBody.project || '',
         timestamp: Date.now(),
         body: `${JSON.stringify(reCalcCampaign)}`
       }
