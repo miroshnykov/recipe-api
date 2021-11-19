@@ -68,7 +68,10 @@ const offerUpdateOrCreate = async (messageBody: ISqsMessage) => {
       influxdb(200, `sqs_offer_inactive_${projectName}`)
       messageResponse.push(generateOfferBodyForDelete)
       break;
-    case IOfferStatus.PUBLIC || IOfferStatus.PENDING || IOfferStatus.APPLY_TO_RUN || IOfferStatus.PRIVATE:
+    case IOfferStatus.PUBLIC:
+    case IOfferStatus.PENDING:
+    case IOfferStatus.APPLY_TO_RUN:
+    case IOfferStatus.PRIVATE:
       let reCalculatedOffer: IOffer | any = await reCalculateOffer(offer)
       let generateOfferBody: ISqsMessage = {
         comments: messageBody.comments,
