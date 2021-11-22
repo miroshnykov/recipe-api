@@ -13,6 +13,16 @@ export const reCalculateOffer = async (offer: IOffer) => {
       return offer
     }
 
+    if (offer.geoRules) {
+      const geoRules = JSON.parse(offer.geoRules)
+      if (geoRules.geo) {
+        const countriesList = geoRules?.geo?.map((i: { country: string; }) => (i.country))
+        if (countriesList.length !== 0) {
+          offer.countriesRestrictions = countriesList.join(',')
+          offer.geoRules = ''
+        }
+      }
+    }
     if (offer.capsEnabled) {
       let offerCaps = await reCalculateOfferCaps(offer.offerId)
       if (offerCaps?.capSetup && offerCaps?.capInfo) {

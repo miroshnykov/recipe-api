@@ -31,6 +31,9 @@
 ## build
 
     npm run build
+## enpoints
+    https://recipe.aezai.com/fileSizeInfoRedis
+    https://recipe-slave.aezai.com/fileSizeInfoRedis
 
 ## env example
 

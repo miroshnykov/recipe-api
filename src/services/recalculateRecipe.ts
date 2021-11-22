@@ -7,8 +7,9 @@ import {ICampaign} from "../interfaces/campaigns";
 import {getCampaign} from "../models/campaignsModel";
 import {reCalculateCampaignCaps} from "./campaignsCaps";
 import {deleteMessage} from "../sqs";
+import consola from "consola";
 
-export const recalculateRecipe = async (message: any) => {
+export const recalculateRecipe = async (message: any): Promise<ISqsMessage[]> => {
   let responseEntity = []
   try {
     const messageBody = JSON.parse(message.Body!)
@@ -23,6 +24,8 @@ export const recalculateRecipe = async (message: any) => {
         responseEntity.push(response)
         break;
       default:
+        consola.info(`recalculateRecipe sqs message type not defined`)
+        influxdb(500, `sqs_message_type_not_defined`)
     }
 
     await deleteMessage(message.ReceiptHandle!)
@@ -32,7 +35,7 @@ export const recalculateRecipe = async (message: any) => {
   }
 }
 
-const offerReCalculate = async (messageBody: ISqsMessage) => {
+const offerReCalculate = async (messageBody: ISqsMessage): Promise<ISqsMessage[]> => {
   let messageResponse = []
 
   switch (messageBody.action) {
@@ -50,7 +53,7 @@ const offerReCalculate = async (messageBody: ISqsMessage) => {
   return messageResponse.flat()
 }
 
-const offerUpdateOrCreate = async (messageBody: ISqsMessage) => {
+const offerUpdateOrCreate = async (messageBody: ISqsMessage): Promise<ISqsMessage[]> => {
   let offer: IOffer = await getOffer(messageBody.id)
   const projectName = messageBody?.project || ''
   let messageResponse = []
@@ -60,6 +63,7 @@ const offerUpdateOrCreate = async (messageBody: ISqsMessage) => {
         comments: 'offer status inactive, lets delete from recipe',
         type: ISqsMessageType.OFFER,
         id: messageBody.id,
+        project: messageBody.project || '',
         action: ISqsMessageAction.DELETE,
         timestamp: Date.now(),
         body: ``
@@ -78,6 +82,7 @@ const offerUpdateOrCreate = async (messageBody: ISqsMessage) => {
         type: ISqsMessageType.OFFER,
         id: messageBody.id,
         action: messageBody.action,
+        project: messageBody.project || '',
         timestamp: Date.now(),
         body: `${JSON.stringify(reCalculatedOffer)}`
       }
@@ -97,6 +102,7 @@ const offerUpdateOrCreate = async (messageBody: ISqsMessage) => {
           id: findAgg.sfl_offer_aggregated_id,
           action: ISqsMessageAction.UPDATE_OR_CREATE,
           timestamp: Date.now(),
+          project: messageBody.project || '',
           body: `${JSON.stringify(reCalculateAggregatedOffer)}`
         }
         influxdb(200, `sqs_offer_update_aggregated_${projectName}`)
@@ -105,11 +111,13 @@ const offerUpdateOrCreate = async (messageBody: ISqsMessage) => {
 
       break;
     default:
+      consola.info(`offerReCalculate status not defined`)
+      influxdb(500, `sqs_offer_status_not_defined_${projectName}`)
   }
   return messageResponse.flat()
 }
 
-const campaignReCalculate = async (messageBody: ISqsMessage) => {
+const campaignReCalculate = async (messageBody: ISqsMessage): Promise<ISqsMessage[]> => {
   let messageResponse = []
   const projectName = messageBody?.project || ''
   switch (messageBody.action) {
@@ -121,6 +129,7 @@ const campaignReCalculate = async (messageBody: ISqsMessage) => {
         type: ISqsMessageType.CAMPAIGN,
         id: messageBody.id,
         action: messageBody.action,
+        project: messageBody.project || '',
         timestamp: Date.now(),
         body: `${JSON.stringify(reCalcCampaign)}`
       }

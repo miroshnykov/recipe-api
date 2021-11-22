@@ -99,6 +99,7 @@ app.get('/files', async (req: Request, res: Response) => {
 
 // http://localhost:3001/fileSizeInfoRedis
 // https://co-recipe.jatun.systems/fileSizeInfoRedis
+// https://recipe.aezai.com/fileSizeInfoRedis
 app.get('/fileSizeInfoRedis', async (req: Request, res: Response) => {
   try {
     let fileSizeCampaignsRecipe: number = Number(await redis.get(`campaignsSize`)) || 0
@@ -223,14 +224,14 @@ io.on('connection', (socket: Socket) => {
   })
   let updRedis: any = []
 
-  const sendUpdRecipe = async () => {
+  const sendUpdRecipe = async (): Promise<void> => {
     try {
-      const messages = await sqsProcess()
+      const messages: ISqsMessage[] = await sqsProcess()
 
       if (messages.length === 0) return
       for (const message of messages) {
         // consola.info(`send to socket ${socket.id}, message:${JSON.stringify(message)}`)
-        consola.info(`send to socket ${socket.id}, ${message.type}ID:${message.id}, action:${message.action}, comments:${message.comments} `)
+        consola.info(`send to socket ${socket.id}, ${message.type}ID:${message.id}, action:${message.action}, project:${message.project}, comments:${message.comments} `)
         io.sockets.emit("updRecipe", message)
       }
 

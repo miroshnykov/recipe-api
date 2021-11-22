@@ -1,6 +1,7 @@
 import {FieldPacket, Pool, RowDataPacket} from "mysql2/promise";
 import {connect} from "../db/mysql";
 import consola from "consola";
+import {influxdb} from "../metrics";
 
 export const getCampaigns = async () => {
   try {
@@ -28,6 +29,7 @@ export const getCampaigns = async () => {
 
   } catch (e) {
     consola.error('getCampaignsError:', e)
+    influxdb(500, `get_campaigns_error`)
     return []
   }
 }
@@ -56,6 +58,7 @@ export const getCampaign = async (id: number) => {
 
   } catch (e) {
     consola.error('getCampaignError:', e)
+    influxdb(500, `get_campaign_error`)
     return []
   }
 }
@@ -96,6 +99,7 @@ export const getCampaignCaps = async (id: number) => {
 
   } catch (e) {
     consola.error('getCampaignCapsError:', e)
+    influxdb(500, `get_campaign_caps_error`)
     return []
   }
 }
