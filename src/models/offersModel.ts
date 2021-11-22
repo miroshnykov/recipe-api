@@ -146,13 +146,7 @@ export const getAggregatedOffers = async (id: number) => {
         }
       }
 
-      const geoRules = JSON.parse(offerInfo_.geoRules)
-      if (geoRules.geo) {
-        const countriesList = geoRules?.geo?.map((i: { country: string; }) => (i.country))
-        if (countriesList.length !== 0) {
-          offer.countriesRestrictions = countriesList.join(',')
-        }
-      }
+      offer.countriesRestrictions = offerInfo_.countriesRestrictions
 
       const customLpRules = JSON.parse(offerInfo_.customLpRules)
       if (customLpRules) {

@@ -26,6 +26,7 @@ export interface IOffer {
   endDate: Date
   type: string
   customPayOutCount: number
+  countriesRestrictions?: string
   capOfferId: number
   capSetup: boolean | undefined
   capsEnabled: boolean | undefined

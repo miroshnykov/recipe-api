@@ -7,8 +7,9 @@ import {ICampaign} from "../interfaces/campaigns";
 import {getCampaign} from "../models/campaignsModel";
 import {reCalculateCampaignCaps} from "./campaignsCaps";
 import {deleteMessage} from "../sqs";
+import consola from "consola";
 
-export const recalculateRecipe = async (message: any) => {
+export const recalculateRecipe = async (message: any): Promise<ISqsMessage[]> => {
   let responseEntity = []
   try {
     const messageBody = JSON.parse(message.Body!)
@@ -23,6 +24,8 @@ export const recalculateRecipe = async (message: any) => {
         responseEntity.push(response)
         break;
       default:
+        consola.info(`recalculateRecipe sqs message type not defined`)
+        influxdb(500, `sqs_message_type_not_defined`)
     }
 
     await deleteMessage(message.ReceiptHandle!)
@@ -32,7 +35,7 @@ export const recalculateRecipe = async (message: any) => {
   }
 }
 
-const offerReCalculate = async (messageBody: ISqsMessage) => {
+const offerReCalculate = async (messageBody: ISqsMessage): Promise<ISqsMessage[]> => {
   let messageResponse = []
 
   switch (messageBody.action) {
@@ -50,7 +53,7 @@ const offerReCalculate = async (messageBody: ISqsMessage) => {
   return messageResponse.flat()
 }
 
-const offerUpdateOrCreate = async (messageBody: ISqsMessage) => {
+const offerUpdateOrCreate = async (messageBody: ISqsMessage): Promise<ISqsMessage[]> => {
   let offer: IOffer = await getOffer(messageBody.id)
   const projectName = messageBody?.project || ''
   let messageResponse = []
@@ -108,11 +111,13 @@ const offerUpdateOrCreate = async (messageBody: ISqsMessage) => {
 
       break;
     default:
+      consola.info(`offerReCalculate status not defined`)
+      influxdb(500, `sqs_offer_status_not_defined_${projectName}`)
   }
   return messageResponse.flat()
 }
 
-const campaignReCalculate = async (messageBody: ISqsMessage) => {
+const campaignReCalculate = async (messageBody: ISqsMessage): Promise<ISqsMessage[]> => {
   let messageResponse = []
   const projectName = messageBody?.project || ''
   switch (messageBody.action) {

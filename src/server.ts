@@ -224,9 +224,9 @@ io.on('connection', (socket: Socket) => {
   })
   let updRedis: any = []
 
-  const sendUpdRecipe = async () => {
+  const sendUpdRecipe = async (): Promise<void> => {
     try {
-      const messages = await sqsProcess()
+      const messages: ISqsMessage[] = await sqsProcess()
 
       if (messages.length === 0) return
       for (const message of messages) {

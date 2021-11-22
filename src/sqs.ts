@@ -34,7 +34,7 @@ export const sqsProcess = async () => {
     }
     let messages = []
     for (const message of dataQueue.Messages) {
-      const messagesUpd = await recalculateRecipe(message)
+      const messagesUpd: ISqsMessage[] = await recalculateRecipe(message)
       for (const messageUpd of messagesUpd) {
         messages.push(messageUpd)
       }
