@@ -58,7 +58,7 @@ const runLinksOffer = async (offerId: number) => {
         errors: 'offerInfo empty'
       }
       brokenOffer.push(obj)
-      influxdb(200, `broken_recipe_offer_id_${offerId}`)
+      influxdb(500, `broken_recipe_offer`)
       await insertBrokenLinks(obj)
     }
 
@@ -83,7 +83,7 @@ const runLinksCampaign = async (campaignId: number) => {
         errors: 'campaignInfo empty'
       }
       brokenCampaign.push(obj)
-      influxdb(200, `broken_recipe_campaign_id_${campaignId}`)
+      influxdb(500, `broken_recipe_campaign`)
       await insertBrokenLinks(obj)
     }
 
