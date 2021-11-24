@@ -6,8 +6,9 @@ import {getOffers} from "../models/offersModel";
 import consola from "consola";
 import {ICampaign} from "../interfaces/campaigns";
 import {getCampaigns} from "../models/campaignsModel";
-const trafficUrl = 'https://traffic.aezai.com/'
-//const trafficUrl = 'http://localhost:5000/'
+
+const trafficUrl: string = process.env.TRAFFIC_URL || ''
+// const trafficUrl = 'http://localhost:5000/'
 
 export const testLinksOffers = async () => {
   try {
