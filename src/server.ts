@@ -27,7 +27,7 @@ const io = new Server(httpServer, {});
 const host: string = process.env.HOST || ''
 const port: number = Number(process.env.PORT || '3001')
 
-app.get('/health', (req: Request, res: Response) => {
+app.get('/api/v1/health', (req: Request, res: Response) => {
   res.json('Ok')
 })
 
