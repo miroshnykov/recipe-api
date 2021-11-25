@@ -29,8 +29,6 @@ export const reCalculateOffer = async (offer: IOffer) => {
         offer.capInfo = offerCaps.capInfo
         offer.capSetup = offerCaps.capSetup
         offer.landingPageUrlOrigin = offerCaps.landingPageUrl
-        offer.offerIdOrigin = offerCaps.offerId
-        offer.referredOfferId = offerCaps.referredOfferId
         offer.redirectType = offerCaps.redirectType
         offer.redirectReason = offerCaps.redirectReason
       }
@@ -286,17 +284,17 @@ export const reCalculateOfferCaps = async (offerId: number) => {
     if (capInfo.capsClicksOverLimit) {
       if (clicksRedirectOfferUseDefault) {
         capInfo.exitTrafficClicks = true
-        await offerReferred(
+        capInfo.offerCapsOfferIdRedirect = offer.offerIdRedirectExitTraffic
+        await setRedirectInfo(
           offer,
-          offer.offerIdRedirectExitTraffic,
           IRedirectType.CAPS_OFFERS_CLICKS_OVER_LIMIT,
           IRedirectReason.CAPS_OFFERS_CLICKS_OVER_LIMIT_EXIT_TRAFFIC
         )
       } else {
         capInfo.capClicksRedirect = true
-        await offerReferred(
+        capInfo.offerCapsOfferIdRedirect = clicksRedirectOfferId
+        await setRedirectInfo(
           offer,
-          clicksRedirectOfferId,
           IRedirectType.CAPS_OFFERS_CLICKS_OVER_LIMIT,
           IRedirectReason.CAPS_OFFERS_CLICKS_OVER_LIMIT_CAP_REDIRECT
         )
@@ -307,16 +305,16 @@ export const reCalculateOfferCaps = async (offerId: number) => {
     if (capInfo.capsSalesOverLimit) {
       if (salesRedirectOfferUseDefault) {
         capInfo.exitTrafficSales = true
-        await offerReferred(
+        capInfo.offerCapsOfferIdRedirect =  offer.offerIdRedirectExitTraffic
+        await setRedirectInfo(
           offer,
-          offer.offerIdRedirectExitTraffic,
           IRedirectType.CAPS_OFFERS_SALES_OVER_LIMIT,
           IRedirectReason.CAPS_OFFERS_SALES_OVER_LIMIT_EXIT_TRAFFIC)
       } else {
         capInfo.capSalesRedirect = true
-        await offerReferred(
+        capInfo.offerCapsOfferIdRedirect = salesRedirectOfferId
+        await setRedirectInfo(
           offer,
-          salesRedirectOfferId,
           IRedirectType.CAPS_OFFERS_SALES_OVER_LIMIT,
           IRedirectReason.CAPS_OFFERS_SALES_OVER_LIMIT_CAP_REDIRECT)
       }
@@ -331,15 +329,11 @@ export const reCalculateOfferCaps = async (offerId: number) => {
   }
 }
 
-const offerReferred = async (
+const setRedirectInfo = async (
   offer: IOffer,
-  referredOfferId: number,
   redirectType: IRedirectType,
   redirectReason: IRedirectReason
 ) => {
-  offer.landingPageUrlOrigin = offer.landingPageUrl || ''
-  offer.offerIdOrigin = offer.offerId || 0
-  offer.referredOfferId = referredOfferId || 0
   offer.redirectType = redirectType
   offer.redirectReason = redirectReason
 }

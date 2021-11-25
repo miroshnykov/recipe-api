@@ -36,7 +36,8 @@ export const getOffers = async () => {
                o.descriptions                                                                AS descriptions,
                o.offer_id_redirect                                                           AS offerIdRedirectExitTraffic,
                o.type                                                                        AS type,
-               (SELECT COUNT(*) FROM sfl_offers_custom_payout p WHERE p.sfl_offer_id = o.id) AS customPayOutCount
+               (SELECT COUNT(*) FROM sfl_offers_custom_payout p WHERE p.sfl_offer_id = o.id) AS customPayOutCount,
+               c.enabled                                                                     AS capsEnabled
         FROM sfl_offers o
                  left join sfl_offer_landing_pages lp
                            ON lp.id = o.sfl_offer_landing_page_id
