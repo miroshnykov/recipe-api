@@ -66,7 +66,7 @@ const runLinksOffer = async (offerId: number) => {
     return brokenOffer
 
   } catch (e) {
-    consola.error('runLinksOfferError:', e)
+    consola.error(`runLinksOfferError trafficUrl:${trafficUrl}`, e)
     return []
   }
 }
@@ -90,7 +90,7 @@ const runLinksCampaign = async (campaignId: number) => {
 
     return brokenCampaign
   } catch (e) {
-    consola.info('runLinksCampaignError:', e)
+    consola.info(`runLinksCampaignError trafficUrl:${trafficUrl}, err:`, e)
     return []
   }
 
