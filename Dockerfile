@@ -24,7 +24,7 @@ WORKDIR /app
 
 COPY --from=builder /app .
 
-EXPOSE 80
+EXPOSE 1086
 
 ENTRYPOINT redis-server --daemonize yes && \
         node -r dotenv/config ./dist/server.js dotenv_config_path=/var/run/secrets/environment
