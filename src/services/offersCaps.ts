@@ -77,6 +77,8 @@ const exitOffersNested = async (offer: IOffer) => {
         exitOffersNested.push(tempOffer)
       }
       return recurseCheckExitOffer(tempOffer!)
+    } else {
+      return
     }
   }
 
