@@ -2,7 +2,7 @@ import consola from "consola";
 import {getAggregatedOffers, getOfferCaps, getCustomPayoutPerGeo, getOffer} from "../models/offersModel";
 import {influxdb} from "../metrics";
 
-import {IOffer} from "../interfaces/offers"
+import {EXIT_OFFERS_NESTED_LIMIT, IOffer} from "../interfaces/offers"
 import {ICapInfo, ICapResult, ICaps, ICapsType} from "../interfaces/caps"
 import {IRedirectReason, IRedirectType} from "../interfaces/recipeTypes";
 
@@ -32,6 +32,8 @@ export const reCalculateOffer = async (offer: IOffer) => {
         offer.redirectType = offerCaps.redirectType
         offer.redirectReason = offerCaps.redirectReason
       }
+      consola.info(`OfferId:${offer.offerId}`)
+      offer.exitOffersNested = await exitOffersNested(offer)
     }
 
     if (offer.useStartEndDate) {
@@ -56,6 +58,30 @@ export const reCalculateOffer = async (offer: IOffer) => {
     influxdb(500, `re_calculate_offer_error`)
     return []
   }
+}
+
+const exitOffersNested = async (offer: IOffer) => {
+  const limitNested: number = EXIT_OFFERS_NESTED_LIMIT
+  let exitOffersNested: IOffer[] = []
+  let count: number = 0
+  const recurseCheckExitOffer = async (offer: IOffer): Promise<any> => {
+
+    if (offer.offerIdRedirectExitTraffic
+      && offer?.capInfo?.isExitTraffic
+      && count < limitNested
+    ) {
+      const tempOffer = await reCalculateOfferCaps(offer.offerIdRedirectExitTraffic)
+      if (tempOffer?.capInfo?.isExitTraffic) {
+        count++
+        consola.info(` -> nested exit offerId:${tempOffer.offerId}, count:${count}`)
+        exitOffersNested.push(tempOffer)
+      }
+      return recurseCheckExitOffer(tempOffer!)
+    }
+  }
+
+  await recurseCheckExitOffer(offer)
+  return exitOffersNested
 }
 
 export const reCalculateOfferCaps = async (offerId: number) => {
@@ -148,7 +174,8 @@ export const reCalculateOfferCaps = async (offerId: number) => {
       capsClicksOverLimit: null,
       capsClicksOverLimitDetails: null,
       exitTrafficSales: null,
-      exitTrafficClicks: null
+      exitTrafficClicks: null,
+      isExitTraffic: false
     }
 
     if (useStartEndDate && capsStartDate && capsEndDate) {
@@ -284,6 +311,7 @@ export const reCalculateOfferCaps = async (offerId: number) => {
     if (capInfo.capsClicksOverLimit) {
       if (clicksRedirectOfferUseDefault) {
         capInfo.exitTrafficClicks = true
+        capInfo.isExitTraffic = true
         capInfo.offerCapsOfferIdRedirect = offer.offerIdRedirectExitTraffic
         await setRedirectInfo(
           offer,
@@ -305,7 +333,8 @@ export const reCalculateOfferCaps = async (offerId: number) => {
     if (capInfo.capsSalesOverLimit) {
       if (salesRedirectOfferUseDefault) {
         capInfo.exitTrafficSales = true
-        capInfo.offerCapsOfferIdRedirect =  offer.offerIdRedirectExitTraffic
+        capInfo.isExitTraffic = true
+        capInfo.offerCapsOfferIdRedirect = offer.offerIdRedirectExitTraffic
         await setRedirectInfo(
           offer,
           IRedirectType.CAPS_OFFERS_SALES_OVER_LIMIT,
