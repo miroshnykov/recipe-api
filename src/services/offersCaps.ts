@@ -33,7 +33,7 @@ export const reCalculateOffer = async (offer: IOffer) => {
         offer.redirectReason = offerCaps.redirectReason
       }
       consola.info(`OfferId:${offer.offerId}`)
-      offer.exitOffersNested = await exitOffersNested(offer)
+      // offer.exitOffersNested = await exitOffersNested(offer)
     }
 
     if (offer.useStartEndDate) {
