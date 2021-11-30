@@ -150,6 +150,7 @@ app.get('/capsCampaigns', async (req: Request, res: Response) => {
   }
 })
 
+// https://recipe.aezai.com/link
 app.get('/link', async (req: Request, res: Response) => {
   try {
     setTimeout(testLinksOffers, 10000) // 10000 -> 10s
@@ -264,5 +265,5 @@ setInterval(testLinksCampaigns, 25200000) // 25200000 -> 7h
 
 
 httpServer.listen(port, host, (): void => {
-  consola.success(`server is running on http://${host}:${port}`)
+  consola.success(`server is running on http://${host}:${port} Using node - { ${process.version} } `)
 });
