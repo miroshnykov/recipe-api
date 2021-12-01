@@ -16,6 +16,7 @@ const computerName = os.hostname()
 
 export const setOffersRecipe = async () => {
   try {
+    const startTime: number = new Date().getTime()
     consola.info(`Start create offer recipe`)
     const offers: IOffer[] = await getOffers()
     const offerFormat: IOffer[] = []
@@ -23,7 +24,9 @@ export const setOffersRecipe = async () => {
       const reCalcOffer: IOffer = <IOffer>await reCalculateOffer(offer)
       offerFormat.push(reCalcOffer)
     }
-    consola.info(`Recalculate offers done`)
+    const endTime: number = new Date().getTime()
+    const speedTime: number = endTime - startTime
+    consola.info(`Recalculate offers done speedTime: { ${speedTime}ms } PORT:${process.env.PORT} HOST:${process.env.HOST}`)
     const sizeOfOffersDB: number = memorySizeOfBite(offerFormat)
     consola.info(`Identify Size of Offers Object:${sizeOfOffersDB}`)
     influxdb(200, `size_of_offers_db_${sizeOfOffersDB}_${computerName}`)
