@@ -102,8 +102,8 @@ app.get('/files', async (req: Request, res: Response) => {
 // https://recipe.aezai.com/fileSizeInfoRedis
 app.get('/fileSizeInfoRedis', async (req: Request, res: Response) => {
   try {
-    let fileSizeCampaignsRecipe: number = Number(await redis.get(`campaignsSize`)) || 0
-    let fileSizeOffersRecipe: number = Number(await redis.get(`offersSize`)) || 0
+    let fileSizeCampaignsRecipe: number = Number(await redis.get(`campaignsSizeRecipe`)) || 0
+    let fileSizeOffersRecipe: number = Number(await redis.get(`offersSizeRecipe`)) || 0
 
     res.json({
       fileSizeCampaignsRecipe,
@@ -186,7 +186,7 @@ io.on('connection', (socket: Socket) => {
   socket.on('fileSizeOffersCheck', async (fileSizeOffersCheck: number) => {
     try {
       // consola.info(`Get size from engine:${fileSizeOffersCheck}`)
-      let fileSizeOffersRecipe: number = Number(await redis.get(`offersSize`))
+      let fileSizeOffersRecipe: number = Number(await redis.get(`offersSizeRecipe`))
 
       if (!fileSizeOffersRecipe) {
         consola.info(`fileSizeOffersRecipe:${fileSizeOffersRecipe} not set up yet, dont need to send to co-traffic empty size`)
@@ -206,7 +206,7 @@ io.on('connection', (socket: Socket) => {
 
   socket.on('fileSizeCampaignsCheck', async (fileSizeCampaignsCheck: number) => {
     try {
-      let fileSizeCampaignsRecipe: number = Number(await redis.get(`campaignsSize`))
+      let fileSizeCampaignsRecipe: number = Number(await redis.get(`campaignsSizeRecipe`))
       if (!fileSizeCampaignsRecipe) {
         consola.info(`fileSizeCampaignsRecipe:${fileSizeCampaignsRecipe} not set up yet, dont need to send to co-traffic empty size `)
         return
