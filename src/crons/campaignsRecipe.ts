@@ -16,6 +16,8 @@ const computerName = os.hostname()
 
 export const setCampaignsRecipe = async () => {
   try {
+    const startTime: number = new Date().getTime()
+    consola.info(`\nStart create campaigns recipe`)
     const campaigns: ICampaign[] = await getCampaigns()
     let campaignsFormat: ICampaign[] = []
     for (const campaign of campaigns) {
@@ -26,7 +28,10 @@ export const setCampaignsRecipe = async () => {
         campaignsFormat.push(campaign)
       }
     }
+    const endTime: number = new Date().getTime()
+    const speedTime: number = endTime - startTime
 
+    consola.info(`Recalculate campaigns done speedTime: { ${speedTime}ms }`)
     const sizeOfCampaignsDB: number = memorySizeOfBite(campaignsFormat)
     consola.info(`Identify Size of Campaigns from DB Object:${sizeOfCampaignsDB}`)
     influxdb(200, `size_of_campaigns_db_${sizeOfCampaignsDB}_${computerName}`)
