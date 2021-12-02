@@ -32,7 +32,7 @@ export const reCalculateOffer = async (offer: IOffer) => {
         offer.redirectType = offerCaps.redirectType
         offer.redirectReason = offerCaps.redirectReason
       }
-      consola.info(`OfferId:${offer.offerId}`)
+      // consola.info(`OfferId:${offer.offerId}`)
       offer.exitOffersNested = await exitOffersNested(offer)
     }
 
@@ -63,6 +63,7 @@ export const reCalculateOffer = async (offer: IOffer) => {
 const exitOffersNested = async (offer: IOffer) => {
   const limitNested: number = EXIT_OFFERS_NESTED_LIMIT
   let exitOffersNested: IOffer[] = []
+  let parentOffer: IOffer[] = []
   let count: number = 0
   const recurseCheckExitOffer = async (offer: IOffer): Promise<any> => {
 
@@ -73,8 +74,11 @@ const exitOffersNested = async (offer: IOffer) => {
       const tempOffer = await reCalculateOfferCaps(offer.offerIdRedirectExitTraffic)
       if (tempOffer?.capInfo?.isExitTraffic) {
         count++
-        consola.info(` -> nested exit offerId:${tempOffer.offerId}, count:${count}`)
+
         exitOffersNested.push(tempOffer)
+        parentOffer.push(offer)
+        const str = count === 1 ? '\n' : ''
+        consola.info(`${str} -> nested exit offerId:${tempOffer.offerId}, count:${count}, parent offer:${JSON.stringify(parentOffer.map(i => i.offerId))}`)
       }
       return recurseCheckExitOffer(tempOffer!)
     }
