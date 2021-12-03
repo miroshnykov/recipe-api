@@ -61,12 +61,20 @@ export const setOffersRecipe = async () => {
         consola.success(`File Offers(count:${offerFormat?.length}) created path:${filePath} `)
       }
     )
-    setTimeout(uploadFileToS3Bucket, 6000, IRecipeType.OFFERS)
-    setTimeout(setFileSize, 10000, IRecipeType.OFFERS, sizeOfOffersDB)
+    // setTimeout(uploadFileToS3Bucket, 6000, IRecipeType.OFFERS)
+    // setTimeout(setFileSize, 10000, IRecipeType.OFFERS, sizeOfOffersDB)
+    setTimeout(uploadS3SetSize, 6000, sizeOfOffersDB)
 
   } catch (e) {
     influxdb(500, `recipe_offers_create_error_${computerName}`)
     consola.error('create offers recipe Error:', e)
   }
 
+}
+
+const uploadS3SetSize = async (sizeOfOffersDB: number) => {
+  const response: boolean | undefined = await uploadFileToS3Bucket(IRecipeType.OFFERS)
+  if (response) {
+    setTimeout(setFileSize, 10000, IRecipeType.OFFERS, sizeOfOffersDB)
+  }
 }

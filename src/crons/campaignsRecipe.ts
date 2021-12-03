@@ -65,8 +65,9 @@ export const setCampaignsRecipe = async () => {
         consola.success(`File Campaigns (count:${campaigns?.length}) created path:${filePath} `)
       }
     )
-    setTimeout(uploadFileToS3Bucket, 6000, IRecipeType.CAMPAIGNS) // 6000 -> 6 sec
-    setTimeout(setFileSize, 20000, IRecipeType.CAMPAIGNS, sizeOfCampaignsDB)  // 20000 -> 20 sec
+    // setTimeout(uploadFileToS3Bucket, 6000, IRecipeType.CAMPAIGNS) // 6000 -> 6 sec
+    // setTimeout(setFileSize, 20000, IRecipeType.CAMPAIGNS, sizeOfCampaignsDB)  // 20000 -> 20 sec
+    setTimeout(uploadS3SetSize, 6000, sizeOfCampaignsDB)
 
   } catch (e) {
     influxdb(500, `recipe_campaigns_create_error_${computerName}`)
@@ -74,3 +75,9 @@ export const setCampaignsRecipe = async () => {
   }
 }
 
+const uploadS3SetSize = async (sizeOfCampaignsDB: number) => {
+  const response: boolean | undefined = await uploadFileToS3Bucket(IRecipeType.CAMPAIGNS)
+  if (response) {
+    setTimeout(setFileSize, 10000, IRecipeType.CAMPAIGNS, sizeOfCampaignsDB)
+  }
+}
