@@ -260,8 +260,8 @@ setInterval(setOffersRecipe, 312000) // 312000 -> 5.2 min
 setTimeout(setCampaignsRecipe, 20000) // 20000 -> 6 sec
 setTimeout(setOffersRecipe, 10000) // 10000 -> 10 sec
 
-setInterval(testLinksOffers, 28800000) // 28800000 -> 8h
-setInterval(testLinksCampaigns, 25200000) // 25200000 -> 7h
+// setInterval(testLinksOffers, 28800000) // 28800000 -> 8h
+// setInterval(testLinksCampaigns, 25200000) // 25200000 -> 7h
 
 
 httpServer.listen(port, host, (): void => {

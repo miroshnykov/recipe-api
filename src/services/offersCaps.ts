@@ -34,6 +34,7 @@ export const reCalculateOffer = async (offer: IOffer) => {
       }
       // consola.info(`OfferId:${offer.offerId}`)
       offer.exitOffersNested = await exitOffersNested(offer)
+      offer.exitOfferDetected = offer.exitOffersNested.length !== 0 && exitOfferDetecting(offer.exitOffersNested) || []
     }
 
     if (offer.useStartEndDate) {
@@ -68,17 +69,15 @@ const exitOffersNested = async (offer: IOffer) => {
   const recurseCheckExitOffer = async (offer: IOffer): Promise<any> => {
 
     if (offer.offerIdRedirectExitTraffic
-      && offer?.capInfo?.isExitTraffic
-      && count < limitNested
     ) {
       const tempOffer = await reCalculateOfferCaps(offer.offerIdRedirectExitTraffic)
-      if (tempOffer?.capInfo?.isExitTraffic) {
+      if (tempOffer?.offerIdRedirectExitTraffic) {
         count++
 
         exitOffersNested.push(tempOffer)
         parentOffer.push(offer)
-        const str = count === 1 ? '\n' : ''
-        consola.info(`${str} -> nested exit offerId:${tempOffer.offerId}, count:${count}, parent offer:${JSON.stringify(parentOffer.map(i => i.offerId))}`)
+        const str = count === 1 ? `\nHead offerId:${parentOffer[0].offerId}, name:${parentOffer[0].name} \n` : ''
+        consola.info(`${str} -> nested exit offerId:${tempOffer.offerId}, name:${tempOffer.name} isExitTraffic:${tempOffer?.capInfo?.isExitTraffic} count:${count}, parent offer:${JSON.stringify(parentOffer.map(i => i.offerId))}`)
       }
       return recurseCheckExitOffer(tempOffer!)
     }
@@ -86,6 +85,18 @@ const exitOffersNested = async (offer: IOffer) => {
 
   await recurseCheckExitOffer(offer)
   return exitOffersNested
+}
+
+const exitOfferDetecting = (offers: IOffer[]) => {
+  let exitTrafficFilterResult: any = []
+  if (offers.length !== 0) {
+    let exitTrafficFilter = offers.filter(i => !i.capInfo?.isExitTraffic)
+    if (exitTrafficFilter.length !== 0) {
+      exitTrafficFilterResult = exitTrafficFilter[0]
+    }
+    consola.info(` --> exitOfferDetecting offerId:${exitTrafficFilterResult.offerId}, name:${exitTrafficFilterResult.name} isExitTraffic:${exitTrafficFilterResult.capInfo?.isExitTraffic}`)
+    return exitTrafficFilterResult
+  }
 }
 
 export const reCalculateOfferCaps = async (offerId: number) => {
