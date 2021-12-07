@@ -36,6 +36,7 @@ export interface IOffer {
   offersAggregatedIds?: object[]
   capInfo: ICapInfo
   exitOffersNested?: IOffer[]
+  exitOfferDetected?: IOffer
   landingPageUrlOrigin: string | undefined
   redirectType: string | undefined
   redirectReason: string | undefined
