@@ -28,11 +28,11 @@ export const setOffersRecipe = async () => {
     const speedTime: number = endTime - startTime
     consola.info(`Recalculate offers done speedTime: { ${speedTime}ms }`)
     const sizeOfOffersDB: number = memorySizeOfBite(offerFormat)
-    consola.info(`Identify Size of Offers Object:${sizeOfOffersDB} count: { ${offerFormat.length} }`)
+    // consola.info(`Identify Size of Offers Object:${sizeOfOffersDB} count: { ${offerFormat.length} }`)
     influxdb(200, `size_of_offers_db_${sizeOfOffersDB}_${computerName}`)
 
     const sizeOfOffersRedis: number = await getFileSize(IRecipeType.OFFERS)
-    consola.info(`Identify Size of Offers from Redis:${sizeOfOffersRedis}`)
+    consola.info(`Identify Size of Offers Redis: { ${sizeOfOffersRedis} } DB { ${sizeOfOffersDB} } count: { ${offerFormat.length} }`)
 
     if (sizeOfOffersDB === sizeOfOffersRedis) {
       consola.info(`Size of Offers in Redis the same like in DB :${sizeOfOffersDB}, don't need create recipe`)
