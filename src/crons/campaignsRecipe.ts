@@ -33,7 +33,7 @@ export const setCampaignsRecipe = async () => {
 
     consola.info(`Recalculate campaigns done speedTime: { ${speedTime}ms }`)
     const sizeOfCampaignsDB: number = memorySizeOfBite(campaignsFormat)
-    consola.info(`Identify Size of Campaigns from DB Object:${sizeOfCampaignsDB}`)
+    consola.info(`Identify Size of Campaigns from DB Object:${sizeOfCampaignsDB} count: { ${campaignsFormat.length} }`)
     influxdb(200, `size_of_campaigns_db_${sizeOfCampaignsDB}_${computerName}`)
 
     const sizeOfCampaignsRedis: number = await getFileSize(IRecipeType.CAMPAIGNS)

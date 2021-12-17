@@ -102,7 +102,9 @@ const exitOfferDetecting = (offers: IOffer[]) => {
 export const reCalculateOfferCaps = async (offerId: number) => {
   try {
     let offer: IOffer = await getOffer(offerId)
-    if (offer.status === 'inactive') {
+    if (offer.status === 'inactive'
+      || offer.status === 'draft'
+    ) {
       return offer
     }
     if (!offer.capsEnabled) {
