@@ -102,8 +102,8 @@ app.get('/files', async (req: Request, res: Response) => {
 // https://recipe.aezai.com/fileSizeInfoRedis
 app.get('/fileSizeInfoRedis', async (req: Request, res: Response) => {
   try {
-    let fileSizeCampaignsRecipe: number = Number(await redis.get(`campaignsSize`)) || 0
-    let fileSizeOffersRecipe: number = Number(await redis.get(`offersSize`)) || 0
+    let fileSizeCampaignsRecipe: number = Number(await redis.get(`campaignsSizeRecipe`)) || 0
+    let fileSizeOffersRecipe: number = Number(await redis.get(`offersSizeRecipe`)) || 0
 
     res.json({
       fileSizeCampaignsRecipe,
@@ -150,6 +150,7 @@ app.get('/capsCampaigns', async (req: Request, res: Response) => {
   }
 })
 
+// https://recipe.aezai.com/link
 app.get('/link', async (req: Request, res: Response) => {
   try {
     setTimeout(testLinksOffers, 10000) // 10000 -> 10s
@@ -185,7 +186,7 @@ io.on('connection', (socket: Socket) => {
   socket.on('fileSizeOffersCheck', async (fileSizeOffersCheck: number) => {
     try {
       // consola.info(`Get size from engine:${fileSizeOffersCheck}`)
-      let fileSizeOffersRecipe: number = Number(await redis.get(`offersSize`))
+      let fileSizeOffersRecipe: number = Number(await redis.get(`offersSizeRecipe`))
 
       if (!fileSizeOffersRecipe) {
         consola.info(`fileSizeOffersRecipe:${fileSizeOffersRecipe} not set up yet, dont need to send to co-traffic empty size`)
@@ -205,7 +206,7 @@ io.on('connection', (socket: Socket) => {
 
   socket.on('fileSizeCampaignsCheck', async (fileSizeCampaignsCheck: number) => {
     try {
-      let fileSizeCampaignsRecipe: number = Number(await redis.get(`campaignsSize`))
+      let fileSizeCampaignsRecipe: number = Number(await redis.get(`campaignsSizeRecipe`))
       if (!fileSizeCampaignsRecipe) {
         consola.info(`fileSizeCampaignsRecipe:${fileSizeCampaignsRecipe} not set up yet, dont need to send to co-traffic empty size `)
         return
@@ -259,10 +260,10 @@ setInterval(setOffersRecipe, 312000) // 312000 -> 5.2 min
 setTimeout(setCampaignsRecipe, 20000) // 20000 -> 6 sec
 setTimeout(setOffersRecipe, 10000) // 10000 -> 10 sec
 
-setInterval(testLinksOffers, 28800000) // 28800000 -> 8h
-setInterval(testLinksCampaigns, 25200000) // 25200000 -> 7h
+// setInterval(testLinksOffers, 28800000) // 28800000 -> 8h
+// setInterval(testLinksCampaigns, 25200000) // 25200000 -> 7h
 
 
 httpServer.listen(port, host, (): void => {
-  consola.success(`server is running on http://${host}:${port}`)
+  consola.success(`server is running on http://${host}:${port} Using node - { ${process.version} } `)
 });

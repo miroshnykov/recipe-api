@@ -2,7 +2,7 @@ import consola from "consola";
 import {getAggregatedOffers, getOfferCaps, getCustomPayoutPerGeo, getOffer} from "../models/offersModel";
 import {influxdb} from "../metrics";
 
-import {IOffer} from "../interfaces/offers"
+import {EXIT_OFFERS_NESTED_LIMIT, IOffer} from "../interfaces/offers"
 import {ICapInfo, ICapResult, ICaps, ICapsType} from "../interfaces/caps"
 import {IRedirectReason, IRedirectType} from "../interfaces/recipeTypes";
 
@@ -32,6 +32,9 @@ export const reCalculateOffer = async (offer: IOffer) => {
         offer.redirectType = offerCaps.redirectType
         offer.redirectReason = offerCaps.redirectReason
       }
+      // consola.info(`OfferId:${offer.offerId}`)
+      offer.exitOffersNested = await exitOffersNested(offer)
+      offer.exitOfferDetected = offer.exitOffersNested.length !== 0 && exitOfferDetecting(offer.exitOffersNested) || []
     }
 
     if (offer.useStartEndDate) {
@@ -58,10 +61,50 @@ export const reCalculateOffer = async (offer: IOffer) => {
   }
 }
 
+const exitOffersNested = async (offer: IOffer) => {
+  const limitNested: number = EXIT_OFFERS_NESTED_LIMIT
+  let exitOffersNested: IOffer[] = []
+  let parentOffer: IOffer[] = []
+  let count: number = 0
+  const recurseCheckExitOffer = async (offer: IOffer): Promise<any> => {
+
+    if (offer.offerIdRedirectExitTraffic
+    ) {
+      const tempOffer = await reCalculateOfferCaps(offer.offerIdRedirectExitTraffic)
+      if (tempOffer?.offerIdRedirectExitTraffic) {
+        count++
+
+        exitOffersNested.push(tempOffer)
+        parentOffer.push(offer)
+        const str = count === 1 ? `\nHead offerId:${parentOffer[0].offerId}, name:${parentOffer[0].name} \n` : ''
+        consola.info(`${str} -> nested exit offerId:${tempOffer.offerId}, name:${tempOffer.name} isExitTraffic:${tempOffer?.capInfo?.isExitTraffic} count:${count}, parent offer:${JSON.stringify(parentOffer.map(i => i.offerId))}`)
+      }
+      return recurseCheckExitOffer(tempOffer!)
+    }
+  }
+
+  await recurseCheckExitOffer(offer)
+  return exitOffersNested
+}
+
+const exitOfferDetecting = (offers: IOffer[]) => {
+  let exitTrafficFilterResult: any = []
+  if (offers.length !== 0) {
+    let exitTrafficFilter = offers.filter(i => !i.capInfo?.isExitTraffic)
+    if (exitTrafficFilter.length !== 0) {
+      exitTrafficFilterResult = exitTrafficFilter[0]
+    }
+    consola.info(` --> exitOfferDetecting offerId:${exitTrafficFilterResult.offerId}, name:${exitTrafficFilterResult.name} isExitTraffic:${exitTrafficFilterResult.capInfo?.isExitTraffic}`)
+    return exitTrafficFilterResult
+  }
+}
+
 export const reCalculateOfferCaps = async (offerId: number) => {
   try {
     let offer: IOffer = await getOffer(offerId)
-    if (offer.status === 'inactive') {
+    if (offer.status === 'inactive'
+      || offer.status === 'draft'
+    ) {
       return offer
     }
     if (!offer.capsEnabled) {
@@ -148,7 +191,8 @@ export const reCalculateOfferCaps = async (offerId: number) => {
       capsClicksOverLimit: null,
       capsClicksOverLimitDetails: null,
       exitTrafficSales: null,
-      exitTrafficClicks: null
+      exitTrafficClicks: null,
+      isExitTraffic: false
     }
 
     if (useStartEndDate && capsStartDate && capsEndDate) {
@@ -284,6 +328,7 @@ export const reCalculateOfferCaps = async (offerId: number) => {
     if (capInfo.capsClicksOverLimit) {
       if (clicksRedirectOfferUseDefault) {
         capInfo.exitTrafficClicks = true
+        capInfo.isExitTraffic = true
         capInfo.offerCapsOfferIdRedirect = offer.offerIdRedirectExitTraffic
         await setRedirectInfo(
           offer,
@@ -305,7 +350,8 @@ export const reCalculateOfferCaps = async (offerId: number) => {
     if (capInfo.capsSalesOverLimit) {
       if (salesRedirectOfferUseDefault) {
         capInfo.exitTrafficSales = true
-        capInfo.offerCapsOfferIdRedirect =  offer.offerIdRedirectExitTraffic
+        capInfo.isExitTraffic = true
+        capInfo.offerCapsOfferIdRedirect = offer.offerIdRedirectExitTraffic
         await setRedirectInfo(
           offer,
           IRedirectType.CAPS_OFFERS_SALES_OVER_LIMIT,

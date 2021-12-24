@@ -24,6 +24,7 @@ export interface ICapInfo {
   capsClicksOverLimit: boolean | null
   capsClicksOverLimitDetails: string | null
   exitTrafficClicks?: boolean | null
+  isExitTraffic?: boolean | null
   exitTrafficSales?: boolean | null
   currentDate: Date | null
   capsType?: ICapsType | null

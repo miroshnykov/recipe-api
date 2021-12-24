@@ -59,8 +59,9 @@ const offerUpdateOrCreate = async (messageBody: ISqsMessage): Promise<ISqsMessag
   let messageResponse = []
   switch (offer.status) {
     case IOfferStatus.INACTIVE:
+    case IOfferStatus.DRAFT:
       let generateOfferBodyForDelete: ISqsMessage = {
-        comments: 'offer status inactive, lets delete from recipe',
+        comments: 'offer status inactive or draft, lets delete from recipe',
         type: ISqsMessageType.OFFER,
         id: messageBody.id,
         project: messageBody.project || '',

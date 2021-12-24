@@ -35,6 +35,8 @@ export interface IOffer {
   customPayOutPerGeo: string
   offersAggregatedIds?: object[]
   capInfo: ICapInfo
+  exitOffersNested?: IOffer[]
+  exitOfferDetected?: IOffer
   landingPageUrlOrigin: string | undefined
   redirectType: string | undefined
   redirectReason: string | undefined
@@ -52,8 +54,11 @@ export interface IOffersMargin {
 
 export enum IOfferStatus {
   INACTIVE = 'inactive',
+  DRAFT = 'draft',
   PUBLIC = 'public',
   PRIVATE = 'private',
   APPLY_TO_RUN = 'apply_to_run',
   PENDING = 'pending',
 }
+
+export const EXIT_OFFERS_NESTED_LIMIT = 5

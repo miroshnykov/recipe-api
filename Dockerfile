@@ -1,4 +1,4 @@
-FROM node:14.17-alpine3.14 AS builder
+FROM node:16.13.1-alpine3.14 AS builder
 
 WORKDIR /app
 
@@ -12,7 +12,7 @@ RUN npm install \
     && rm -rf src \
     && rm -f .npmrc
 
-FROM node:14.17-alpine3.14
+FROM node:16.13.1-alpine3.14
 
 RUN apk add --no-cache redis
 
@@ -24,7 +24,7 @@ WORKDIR /app
 
 COPY --from=builder /app .
 
-EXPOSE 80
+EXPOSE 1086 1087
 
 ENTRYPOINT redis-server --daemonize yes && \
         node -r dotenv/config ./dist/server.js dotenv_config_path=/var/run/secrets/environment

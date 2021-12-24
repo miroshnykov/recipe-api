@@ -1,4 +1,5 @@
 import fs from "fs";
+import {promises as fsPromises} from 'fs';
 import AWS from 'aws-sdk'
 import consola from "consola";
 import {ManagedUpload} from "aws-sdk/lib/s3/managed_upload";
@@ -6,6 +7,7 @@ import * as dotenv from "dotenv";
 import {influxdb} from "../metrics";
 import {IRecipeType} from "../interfaces/recipeTypes";
 import SendData = ManagedUpload.SendData;
+import {setFileSize} from "./setFileSize";
 
 dotenv.config();
 
@@ -17,7 +19,7 @@ AWS.config.update({
 
 const s3 = new AWS.S3();
 
-export const uploadFileToS3Bucket = async (type: IRecipeType) => {
+export const uploadFileToS3Bucket = async (type: IRecipeType): Promise<boolean | undefined> => {
   try {
     let tempFileName: string = ''
     let s3Key: string = ''
@@ -37,26 +39,21 @@ export const uploadFileToS3Bucket = async (type: IRecipeType) => {
         throw Error(`${type} not define, not able to get file from s3 `)
     }
 
-    fs.readFile(tempFileName, (err, data) => {
-      if (err) throw err;
-
-      const params = {
-        Bucket: s3BucketName,
-        Key: s3Key,
-        Body: data
-      };
-      // consola.info(`upload${type}FileToS3Bucket:${s3BucketName} , s3Key:${s3Key}`)
-
-      s3.upload(params, (err: Error, data: SendData) => {
-        if (err) {
-          consola.error(err);
-        } else {
-          influxdb(200, `recipe_${type}_uploaded_to_s3`)
-          consola.info(`File ${type} uploaded successfully at ${data.Location}`);
-        }
-
-      });
-    });
+    const fileData = await fsPromises.readFile(tempFileName)
+    const params = {
+      Bucket: s3BucketName,
+      Key: s3Key,
+      Body: fileData
+    }
+    const uploadResponse = await s3.upload(params).promise().catch(e => {
+      consola.error(`fileS3UploadBucketError:${s3Key} s3BucketName:${s3BucketName}`, e)
+      influxdb(500, `recipe_${type}_uploaded_to_s3_error`)
+    })
+    if (uploadResponse) {
+      influxdb(200, `recipe_${type}_uploaded_to_s3`)
+      consola.info(`File ${type} uploaded successfully at ${uploadResponse.Location}`);
+      return true
+    }
 
   } catch (error) {
     influxdb(500, `recipe_${type}_uploaded_to_s3_error`)

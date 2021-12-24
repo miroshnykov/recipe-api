@@ -16,20 +16,23 @@ const computerName = os.hostname()
 
 export const setOffersRecipe = async () => {
   try {
+    const startTime: number = new Date().getTime()
+    consola.info(`\nStart create offer recipe`)
     const offers: IOffer[] = await getOffers()
-
     const offerFormat: IOffer[] = []
     for (const offer of offers) {
       const reCalcOffer: IOffer = <IOffer>await reCalculateOffer(offer)
       offerFormat.push(reCalcOffer)
     }
-
+    const endTime: number = new Date().getTime()
+    const speedTime: number = endTime - startTime
+    consola.info(`Recalculate offers done speedTime: { ${speedTime}ms }`)
     const sizeOfOffersDB: number = memorySizeOfBite(offerFormat)
-    consola.info(`Identify Size of Offers Object:${sizeOfOffersDB}`)
+    // consola.info(`Identify Size of Offers Object:${sizeOfOffersDB} count: { ${offerFormat.length} }`)
     influxdb(200, `size_of_offers_db_${sizeOfOffersDB}_${computerName}`)
 
     const sizeOfOffersRedis: number = await getFileSize(IRecipeType.OFFERS)
-    consola.info(`Identify Size of Offers from Redis:${sizeOfOffersRedis}`)
+    consola.info(`Identify Size of Offers Redis: { ${sizeOfOffersRedis} } DB { ${sizeOfOffersDB} } count: { ${offerFormat.length} }`)
 
     if (sizeOfOffersDB === sizeOfOffersRedis) {
       consola.info(`Size of Offers in Redis the same like in DB :${sizeOfOffersDB}, don't need create recipe`)
@@ -58,12 +61,20 @@ export const setOffersRecipe = async () => {
         consola.success(`File Offers(count:${offerFormat?.length}) created path:${filePath} `)
       }
     )
-    setTimeout(uploadFileToS3Bucket, 6000, IRecipeType.OFFERS)
-    setTimeout(setFileSize, 10000, IRecipeType.OFFERS, sizeOfOffersDB)
+    // setTimeout(uploadFileToS3Bucket, 6000, IRecipeType.OFFERS)
+    // setTimeout(setFileSize, 10000, IRecipeType.OFFERS, sizeOfOffersDB)
+    setTimeout(uploadS3SetSize, 6000, sizeOfOffersDB)
 
   } catch (e) {
     influxdb(500, `recipe_offers_create_error_${computerName}`)
     consola.error('create offers recipe Error:', e)
   }
 
+}
+
+const uploadS3SetSize = async (sizeOfOffersDB: number) => {
+  const response: boolean | undefined = await uploadFileToS3Bucket(IRecipeType.OFFERS)
+  if (response) {
+    setTimeout(setFileSize, 10000, IRecipeType.OFFERS, sizeOfOffersDB)
+  }
 }
