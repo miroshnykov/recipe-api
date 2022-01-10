@@ -14,14 +14,20 @@ export const reCalculateOffer = async (offer: IOffer) => {
     }
 
     if (offer.geoRules) {
-      const geoRules = JSON.parse(offer.geoRules)
-      if (geoRules.geo) {
-        const countriesList = geoRules?.geo?.map((i: { country: string; }) => (i.country))
-        if (countriesList.length !== 0) {
-          offer.countriesRestrictions = countriesList.join(',')
-          offer.geoRules = ''
+      try {
+        const geoRules = JSON.parse(offer.geoRules)
+        if (geoRules.geo) {
+          const countriesList = geoRules?.geo?.map((i: { country: string; }) => (i.country))
+          if (countriesList.length !== 0) {
+            offer.countriesRestrictions = countriesList.join(',')
+            offer.geoRules = ''
+          }
         }
+      } catch (e) {
+        consola.error(`Wrong format for offerId:${offer.offerId} `, offer.geoRules)
+        influxdb(500, `re_calculate_offer_geo_wrong_format_error`)
       }
+
     }
     if (offer.capsEnabled) {
       let offerCaps = await reCalculateOfferCaps(offer.offerId)
