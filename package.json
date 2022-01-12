@@ -20,7 +20,7 @@
     "socket.io-stream": "^0.9.1"
   },
   "name": "recipe-api",
-  "version": "0.1.94",
+  "version": "0.1.95",
   "description": "Generate recipe with offers & campaigns",
   "main": "index.js",
   "scripts": {
