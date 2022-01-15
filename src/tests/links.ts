@@ -30,7 +30,11 @@ export const testLinksOffers = async () => {
 export const testLinksCampaigns = async () => {
   try {
     let brokenCampaignIds = []
-    const campaigns: ICampaign[] = await getCampaigns()
+    const campaigns: ICampaign[] | undefined = await getCampaigns()
+    if (!campaigns) {
+      consola.error('recipe_campaigns_created_error')
+      return
+    }
     for (const campaign of campaigns) {
       const brokenCampaign = await runLinksCampaign(campaign.campaignId)
       if (brokenCampaign.length !== 0) {

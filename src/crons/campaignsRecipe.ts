@@ -18,7 +18,12 @@ export const setCampaignsRecipe = async () => {
   try {
     const startTime: number = new Date().getTime()
     consola.info(`\nStart create campaigns recipe`)
-    const campaigns: ICampaign[] = await getCampaigns()
+    const campaigns: ICampaign[] | undefined = await getCampaigns()
+    if (!campaigns) {
+      consola.error('recipe campaigns created errors')
+      influxdb(500, `recipe_campaigns_created_error`)
+      return
+    }
     let campaignsFormat: ICampaign[] = []
     for (const campaign of campaigns) {
       if (campaign.capsEnabled) {

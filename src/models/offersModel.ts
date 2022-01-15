@@ -62,7 +62,6 @@ export const getOffers = async () => {
   } catch (e) {
     consola.error('getOffersError:', e)
     influxdb(500, `get_offers_error`)
-    return []
   }
 }
 

@@ -30,7 +30,6 @@ export const getCampaigns = async () => {
   } catch (e) {
     consola.error('getCampaignsError:', e)
     influxdb(500, `get_campaigns_error`)
-    return []
   }
 }
 

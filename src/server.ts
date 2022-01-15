@@ -131,7 +131,11 @@ app.get('/caps', async (req: Request, res: Response) => {
 
 app.get('/capsCampaigns', async (req: Request, res: Response) => {
   try {
-    const campaigns: ICampaign[] = await getCampaigns()
+    const campaigns: ICampaign[]| undefined = await getCampaigns()
+    if (!campaigns) {
+      consola.error('recipe_campaigns_created_error')
+      return
+    }
     const campaignsFormat: any = []
     for (const campaign of campaigns) {
       if (campaign.capsEnabled) {
