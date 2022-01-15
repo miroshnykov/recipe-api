@@ -18,8 +18,13 @@ export const setOffersRecipe = async () => {
   try {
     const startTime: number = new Date().getTime()
     consola.info(`\nStart create offer recipe`)
-    const offers: IOffer[] = await getOffers()
+    const offers: IOffer[] | undefined = await getOffers()
     const offerFormat: IOffer[] = []
+    if (!offers) {
+      consola.error('recipe offers created errors')
+      influxdb(500, `recipe_offers_created_error`)
+      return
+    }
     for (const offer of offers) {
       const reCalcOffer: IOffer = <IOffer>await reCalculateOffer(offer)
       offerFormat.push(reCalcOffer)
