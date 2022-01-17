@@ -1,77 +1,78 @@
-import fs from "fs";
-import {parse} from "csv-parse"
-import consola from "consola";
-import {insertMaxmind} from "../models/maxmindModel";
+import fs from 'fs';
+import { parse } from 'csv-parse';
+import consola from 'consola';
+import { insertMaxmind } from '../models/maxmindModel';
 
-const maxmindReadyFOrInsert: [] = []
+const maxmindReadyFOrInsert: [] = [];
 
 export const importMaxmind = async () => {
   try {
-    const filepath = '/home/miroshnykov/Documents/GeoIP-legacy.csv'
-    //const filepath = '/home/miroshnykov/Documents/GeoIP-legacy-test.csv'
-    let count = 0
+    const filepath = '/home/miroshnykov/Documents/GeoIP-legacy.csv';
+    // const filepath = '/home/miroshnykov/Documents/GeoIP-legacy-test.csv'
+    let count = 0;
     // @ts-ignore
     fs.createReadStream(filepath)
       .on('error', (e: any) => {
-        consola.error('error:', e)
+        consola.error('error:', e);
       })
       .pipe(parse())
       .on('data', (row: any) => {
-        let ip_start: string = row[0].trim() || ''
-        let ip_end = row[1].trim()
-        let ip_int_start = row[2].trim()
-        let ip_int_end = row[3].trim()
-        let country_code = row[4].trim()
-        let country = row[5].trim()
+        // eslint-disable-next-line @typescript-eslint/naming-convention
+        const ip_start: string = row[0].trim() || '';
+        // eslint-disable-next-line @typescript-eslint/naming-convention
+        const ip_end = row[1].trim();
+        // eslint-disable-next-line @typescript-eslint/naming-convention
+        const ip_int_start = row[2].trim();
+        // eslint-disable-next-line @typescript-eslint/naming-convention
+        const ip_int_end = row[3].trim();
+        // eslint-disable-next-line @typescript-eslint/naming-convention
+        const country_code = row[4].trim();
+        const country = row[5].trim();
 
-
-        let obj = {
+        const obj = {
           ip_start,
           ip_end,
           ip_int_start,
           ip_int_end,
           country_code,
           country,
-        }
+        };
         // console.log('obj:',obj)
-        count++
-        consola.info(count)
+        count++;
+        consola.info(count);
         // @ts-ignore
-        maxmindReadyFOrInsert.push(obj)
+        maxmindReadyFOrInsert.push(obj);
       })
 
       .on('end', () => {
-        console.info('finnish count:', maxmindReadyFOrInsert.length)
-        setTimeout(processData,3000, maxmindReadyFOrInsert)
-
-      })
+        consola.info('finnish count:', maxmindReadyFOrInsert.length);
+        // eslint-disable-next-line @typescript-eslint/no-use-before-define
+        setTimeout(processData, 3000, maxmindReadyFOrInsert);
+      });
 
     return {
       success: true,
-      maxmindReadyFOrInsert: maxmindReadyFOrInsert
-    }
+      maxmindReadyFOrInsert,
+    };
   } catch (e) {
     return {
-      success: false
-    }
+      success: false,
+    };
   }
-}
+};
+
+const insertDBIpAddress = async (record: any) => insertMaxmind(record);
 
 const processData = async (items: any) => {
-
-  console.info('start insert records to DB ')
-  let count = 0
-  for (const item of items) {
-    let res = await insertDBIpAddress(item)
+  consola.info('start insert records to DB ');
+  let count = 0;
+  await Promise.all(items.map(async (item:any) => {
+    const res = await insertDBIpAddress(item);
     if (res) {
-      count++
+      count++;
     }
-  }
-  consola.info('Insert records:', count)
-
-}
-const insertDBIpAddress = async (record: any) => {
-  return await insertMaxmind(record)
-}
+  }));
+  consola.info('Insert records:', count);
+};
 
 // DELETE FROM maxmind_geo_IP

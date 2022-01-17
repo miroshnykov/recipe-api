@@ -1,4 +1,4 @@
-import {ICapInfo} from "./caps"
+import { ICapInfo } from './caps';
 
 export interface IOffer {
   offerId: number
@@ -61,4 +61,4 @@ export enum IOfferStatus {
   PENDING = 'pending',
 }
 
-export const EXIT_OFFERS_NESTED_LIMIT = 5
+export const EXIT_OFFERS_NESTED_LIMIT = 5;

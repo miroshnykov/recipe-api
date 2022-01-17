@@ -1,122 +1,135 @@
-import consola from "consola";
-import {getAggregatedOffers, getOfferCaps, getCustomPayoutPerGeo, getOffer} from "../models/offersModel";
-import {influxdb} from "../metrics";
+import consola from 'consola';
+// eslint-disable-next-line import/no-cycle
+import {
+  getAggregatedOffers, getOfferCaps, getCustomPayoutPerGeo, getOffer,
+} from '../models/offersModel';
+import { influxdb } from '../metrics';
 
-import {EXIT_OFFERS_NESTED_LIMIT, IOffer} from "../interfaces/offers"
-import {ICapInfo, ICapResult, ICaps, ICapsType} from "../interfaces/caps"
-import {IRedirectReason, IRedirectType} from "../interfaces/recipeTypes";
+import { IOffer } from '../interfaces/offers';
+import {
+  ICapInfo, ICapResult, ICaps, ICapsType,
+} from '../interfaces/caps';
+import { IRedirectReason, IRedirectType } from '../interfaces/recipeTypes';
+// eslint-disable-next-line import/no-cycle
+import { calculateMargin, recalculateChildOffers } from './aggregatedOffer';
 
 export const reCalculateOffer = async (offer: IOffer) => {
   try {
-    if (offer.type === 'aggregated') {
-      offer.offersAggregatedIds = await getAggregatedOffers(offer.offerId) || []
-      return offer
+    const offerClone = { ...offer };
+    if (offerClone.type === 'aggregated') {
+      const offersAggregated = await getAggregatedOffers(offerClone.offerId) || [];
+      const marginOffers = calculateMargin(offersAggregated);
+      offerClone.offersAggregatedIds = await recalculateChildOffers(marginOffers);
     }
 
-    if (offer.geoRules) {
+    if (offerClone.geoRules) {
       try {
-        const geoRules = JSON.parse(offer.geoRules)
+        const geoRules = JSON.parse(offerClone.geoRules);
         if (geoRules.geo) {
-          const countriesList = geoRules?.geo?.map((i: { country: string; }) => (i.country))
+          const countriesList = geoRules?.geo?.map((i: { country: string; }) => (i.country));
           if (countriesList.length !== 0) {
-            offer.countriesRestrictions = countriesList.join(',')
-            offer.geoRules = ''
+            offerClone.countriesRestrictions = countriesList.join(',');
+            offerClone.geoRules = '';
           }
         }
       } catch (e) {
-        consola.error(`Wrong format for offerId:${offer.offerId} `, offer.geoRules)
-        influxdb(500, `re_calculate_offer_geo_wrong_format_error`)
+        consola.error(`Wrong format for offerId:${offerClone.offerId} `, offerClone.geoRules);
+        influxdb(500, 're_calculate_offer_geo_wrong_format_error');
       }
-
     }
-    if (offer.capsEnabled) {
-      let offerCaps = await reCalculateOfferCaps(offer.offerId)
+    if (offerClone.capsEnabled) {
+      // eslint-disable-next-line @typescript-eslint/no-use-before-define
+      const offerCaps = await reCalculateOfferCaps(offerClone.offerId);
       if (offerCaps?.capSetup && offerCaps?.capInfo) {
-        offer.capInfo = offerCaps.capInfo
-        offer.capSetup = offerCaps.capSetup
-        offer.landingPageUrlOrigin = offerCaps.landingPageUrl
-        offer.redirectType = offerCaps.redirectType
-        offer.redirectReason = offerCaps.redirectReason
+        offerClone.capInfo = offerCaps.capInfo;
+        offerClone.capSetup = offerCaps.capSetup;
+        offerClone.landingPageUrlOrigin = offerCaps.landingPageUrl;
+        offerClone.redirectType = offerCaps.redirectType;
+        offerClone.redirectReason = offerCaps.redirectReason;
       }
       // consola.info(`OfferId:${offer.offerId}`)
-      offer.exitOffersNested = await exitOffersNested(offer)
-      offer.exitOfferDetected = offer.exitOffersNested.length !== 0 && exitOfferDetecting(offer.exitOffersNested) || []
+      // eslint-disable-next-line @typescript-eslint/no-use-before-define
+      offerClone.exitOffersNested = await exitOffersNested(offerClone);
+      // eslint-disable-next-line @typescript-eslint/no-use-before-define
+      offerClone.exitOfferDetected = offerClone.exitOffersNested.length !== 0 ? exitOfferDetecting(offerClone.exitOffersNested) : [];
     }
 
-    if (offer.useStartEndDate) {
-      offer.startEndDateSetup = true
-      const currentDate = new Date()
-      offer.startEndDateSetting = {
-        startDate: offer.startDate,
-        endDate: offer.endDate,
-        dateRangePass: currentDate > offer.startDate && currentDate < offer.endDate
-      }
+    if (offerClone.useStartEndDate) {
+      offerClone.startEndDateSetup = true;
+      const currentDate = new Date();
+      offerClone.startEndDateSetting = {
+        startDate: offerClone.startDate,
+        endDate: offerClone.endDate,
+        dateRangePass: currentDate > offerClone.startDate && currentDate < offerClone.endDate,
+      };
     }
 
-    if (offer.customPayOutCount > 0) {
-      let customPayOutData = await getCustomPayoutPerGeo(offer.offerId)
-      offer.customPayOutPerGeo = JSON.stringify(customPayOutData)
+    if (offerClone.customPayOutCount > 0) {
+      const customPayOutData = await getCustomPayoutPerGeo(offerClone.offerId);
+      offerClone.customPayOutPerGeo = JSON.stringify(customPayOutData);
     }
-    offer.payin = Number(offer.payin)
-    offer.payout = Number(offer.payout)
-    return offer
+    offerClone.payin = Number(offerClone.payin);
+    offerClone.payout = Number(offerClone.payout);
+    return offerClone;
   } catch (e) {
-    consola.error('reCalculateOfferError:', e)
-    influxdb(500, `re_calculate_offer_error`)
-    return []
+    consola.error('reCalculateOfferError:', e);
+    influxdb(500, 're_calculate_offer_error');
+    return [];
   }
-}
+};
 
 const exitOffersNested = async (offer: IOffer) => {
-  const limitNested: number = EXIT_OFFERS_NESTED_LIMIT
-  let exitOffersNested: IOffer[] = []
-  let parentOffer: IOffer[] = []
-  let count: number = 0
+  // const limitNested: number = EXIT_OFFERS_NESTED_LIMIT;
+  const exitOffersNestedArr: IOffer[] = [];
+  const parentOffer: IOffer[] = [];
+  let count: number = 0;
+  // eslint-disable-next-line @typescript-eslint/no-shadow,consistent-return
   const recurseCheckExitOffer = async (offer: IOffer): Promise<any> => {
-
     if (offer.offerIdRedirectExitTraffic
     ) {
-      const tempOffer = await reCalculateOfferCaps(offer.offerIdRedirectExitTraffic)
+      // eslint-disable-next-line @typescript-eslint/no-use-before-define
+      const tempOffer = await reCalculateOfferCaps(offer.offerIdRedirectExitTraffic);
       if (tempOffer?.offerIdRedirectExitTraffic) {
-        count++
+        count++;
 
-        exitOffersNested.push(tempOffer)
-        parentOffer.push(offer)
-        const str = count === 1 ? `\nHead offerId:${parentOffer[0].offerId}, name:${parentOffer[0].name} \n` : ''
-        consola.info(`${str} -> nested exit offerId:${tempOffer.offerId}, name:${tempOffer.name} isExitTraffic:${tempOffer?.capInfo?.isExitTraffic} count:${count}, parent offer:${JSON.stringify(parentOffer.map(i => i.offerId))}`)
+        exitOffersNestedArr.push(tempOffer);
+        parentOffer.push(offer);
+        const str = count === 1 ? `\nHead offerId:${parentOffer[0].offerId}, name:${parentOffer[0].name} \n` : '';
+        consola.info(`${str} -> nested exit offerId:${tempOffer.offerId}, name:${tempOffer.name} isExitTraffic:${tempOffer?.capInfo?.isExitTraffic} count:${count}, parent offer:${JSON.stringify(parentOffer.map((i) => i.offerId))}`);
       }
-      return recurseCheckExitOffer(tempOffer!)
+      return recurseCheckExitOffer(tempOffer!);
     }
-  }
+  };
 
-  await recurseCheckExitOffer(offer)
-  return exitOffersNested
-}
+  await recurseCheckExitOffer(offer);
+  return exitOffersNestedArr;
+};
 
 const exitOfferDetecting = (offers: IOffer[]) => {
-  let exitTrafficFilterResult: any = []
+  let exitTrafficFilterResult: any = [];
   if (offers.length !== 0) {
-    let exitTrafficFilter = offers.filter(i => !i.capInfo?.isExitTraffic)
+    const exitTrafficFilter = offers.filter((i) => !i.capInfo?.isExitTraffic);
     if (exitTrafficFilter.length !== 0) {
-      exitTrafficFilterResult = exitTrafficFilter[0]
+      [exitTrafficFilterResult] = exitTrafficFilter;
     }
-    consola.info(` --> exitOfferDetecting offerId:${exitTrafficFilterResult.offerId}, name:${exitTrafficFilterResult.name} isExitTraffic:${exitTrafficFilterResult.capInfo?.isExitTraffic}`)
-    return exitTrafficFilterResult
+    consola.info(` --> exitOfferDetecting offerId:${exitTrafficFilterResult.offerId}, name:${exitTrafficFilterResult.name} isExitTraffic:${exitTrafficFilterResult.capInfo?.isExitTraffic}`);
   }
-}
+  return exitTrafficFilterResult;
+};
 
+// eslint-disable-next-line consistent-return
 export const reCalculateOfferCaps = async (offerId: number) => {
   try {
-    let offer: IOffer = await getOffer(offerId)
+    const offer: IOffer = await getOffer(offerId);
     if (offer.status === 'inactive'
       || offer.status === 'draft'
     ) {
-      return offer
+      return offer;
     }
     if (!offer.capsEnabled) {
-      return offer
+      return offer;
     }
-    let offerCaps: ICaps = await getOfferCaps(offerId)
+    const offerCaps: ICaps = await getOfferCaps(offerId);
     const {
       clicksDaySetUpLimit,
       clicksWeekSetUpLimit,
@@ -136,8 +149,8 @@ export const reCalculateOfferCaps = async (offerId: number) => {
       salesRedirectOfferUseDefault,
       capsStartDate,
       capsEndDate,
-      useStartEndDate
-    } = offerCaps
+      useStartEndDate,
+    } = offerCaps;
 
     if (!clicksDaySetUpLimit
       && !clicksWeekSetUpLimit
@@ -146,38 +159,38 @@ export const reCalculateOfferCaps = async (offerId: number) => {
       && !salesWeekSetUpLimit
       && !salesMonthSetupLimit
     ) {
-      return offer
+      return offer;
     }
-
-    offer.capSetup = true
-    let capInfo: ICapInfo = {
+    const offerClone = { ...offer };
+    offerClone.capSetup = true;
+    const capInfo: ICapInfo = {
       sales: {
         day: {
           current: 0,
-          limit: 0
+          limit: 0,
         },
         week: {
           current: 0,
-          limit: 0
+          limit: 0,
         },
         month: {
           current: 0,
           limit: 0,
-        }
+        },
       },
       clicks: {
         day: {
           current: 0,
-          limit: 0
+          limit: 0,
         },
         week: {
           current: 0,
-          limit: 0
+          limit: 0,
         },
         month: {
           current: 0,
           limit: 0,
-        }
+        },
       },
       dateRangeSetUp: null,
       capClicksRedirect: null,
@@ -198,194 +211,175 @@ export const reCalculateOfferCaps = async (offerId: number) => {
       capsClicksOverLimitDetails: null,
       exitTrafficSales: null,
       exitTrafficClicks: null,
-      isExitTraffic: false
-    }
+      isExitTraffic: false,
+    };
 
     if (useStartEndDate && capsStartDate && capsEndDate) {
-      capInfo.dateRangeSetUp = true
-      capInfo.dateStart = capsStartDate
-      capInfo.dateEnd = capsEndDate
-      const currentDate = new Date()
-      capInfo.currentDate = capsEndDate
-      capInfo.dateRangePass = currentDate > capsStartDate && currentDate < capsEndDate
+      capInfo.dateRangeSetUp = true;
+      capInfo.dateStart = capsStartDate;
+      capInfo.dateEnd = capsEndDate;
+      const currentDate = new Date();
+      capInfo.currentDate = capsEndDate;
+      capInfo.dateRangePass = currentDate > capsStartDate && currentDate < capsEndDate;
 
       if (!capInfo.dateRangePass) {
-        capInfo.dateRangeNotPassDescriptions = `capsStartDate:${capsStartDate} capsEndDate:${capsEndDate}`
-        capInfo.capsType = ICapsType.CAPS_OFFER_DATA_RANGE_NOT_PASS
-        offer.capInfo = capInfo
-        return offer
+        capInfo.dateRangeNotPassDescriptions = `capsStartDate:${capsStartDate} capsEndDate:${capsEndDate}`;
+        capInfo.capsType = ICapsType.CAPS_OFFER_DATA_RANGE_NOT_PASS;
+        offerClone.capInfo = capInfo;
+        return offerClone;
       }
     }
 
-    capInfo.sales.day.current = salesDayCurrent
-    capInfo.sales.day.limit = salesDaySetUpLimit
+    capInfo.sales.day.current = salesDayCurrent;
+    capInfo.sales.day.limit = salesDaySetUpLimit;
 
-    capInfo.sales.week.current = salesWeekCurrent
-    capInfo.sales.week.limit = salesWeekSetUpLimit
+    capInfo.sales.week.current = salesWeekCurrent;
+    capInfo.sales.week.limit = salesWeekSetUpLimit;
 
-    capInfo.sales.month.current = salesMonthCurrent
-    capInfo.sales.month.limit = salesMonthSetupLimit
+    capInfo.sales.month.current = salesMonthCurrent;
+    capInfo.sales.month.limit = salesMonthSetupLimit;
 
     const conditionsSetupSales: ICapResult[] = [
       {
-        "period": "day",
-        "limit": salesDaySetUpLimit,
-        "currentAmount": salesDayCurrent
+        period: 'day',
+        limit: salesDaySetUpLimit,
+        currentAmount: salesDayCurrent,
       },
       {
-        "period": "week",
-        "limit": salesWeekSetUpLimit,
-        "currentAmount": salesWeekCurrent
+        period: 'week',
+        limit: salesWeekSetUpLimit,
+        currentAmount: salesWeekCurrent,
       },
       {
-        "period": "month",
-        "limit": salesMonthSetupLimit,
-        "currentAmount": salesMonthCurrent
+        period: 'month',
+        limit: salesMonthSetupLimit,
+        currentAmount: salesMonthCurrent,
       },
-    ]
-    const conditionsSetupSalesNotEmpty = conditionsSetupSales.filter(i => (i.limit))
+    ];
+    const conditionsSetupSalesNotEmpty = conditionsSetupSales.filter((i) => (i.limit));
 
-    const salesResultUnderLimit: ICapResult[] = []
-    const salesResultOverLimit: ICapResult[] = []
+    const salesResultUnderLimit: ICapResult[] = [];
+    const salesResultOverLimit: ICapResult[] = [];
     conditionsSetupSalesNotEmpty.forEach((i: ICapResult) => {
       if (i.currentAmount < i.limit) {
-        salesResultUnderLimit.push(i)
+        salesResultUnderLimit.push(i);
       } else {
-        salesResultOverLimit.push(i)
+        salesResultOverLimit.push(i);
       }
-    })
+    });
 
     if (salesResultUnderLimit.length !== 0
       && salesResultUnderLimit.length === conditionsSetupSalesNotEmpty.length
     ) {
-      capInfo.capsSalesUnderLimit = true
-      capInfo.capsSalesUnderLimitDetails = salesResultUnderLimit.map((i: { period: string }) => (i.period)).join(',')
-      capInfo.capsType = ICapsType.CAPS_OFFER_UNDER_LIMIT
+      capInfo.capsSalesUnderLimit = true;
+      capInfo.capsSalesUnderLimitDetails = salesResultUnderLimit.map((i: { period: string }) => (i.period)).join(',');
+      capInfo.capsType = ICapsType.CAPS_OFFER_UNDER_LIMIT;
     } else {
-      capInfo.capsSalesUnderLimit = false
-      capInfo.capsSalesUnderLimitDetails = salesResultUnderLimit.map((i: { period: string }) => (i.period)).join(',')
+      capInfo.capsSalesUnderLimit = false;
+      capInfo.capsSalesUnderLimitDetails = salesResultUnderLimit.map((i: { period: string }) => (i.period)).join(',');
     }
 
     if (salesResultOverLimit.length !== 0) {
-      capInfo.capsSalesOverLimit = true
-      capInfo.capsSalesOverLimitDetails = salesResultOverLimit.map((i: { period: string }) => (i.period)).join(',')
+      capInfo.capsSalesOverLimit = true;
+      capInfo.capsSalesOverLimitDetails = salesResultOverLimit.map((i: { period: string }) => (i.period)).join(',');
     } else {
-      capInfo.capsSalesOverLimit = false
-      capInfo.capsSalesOverLimitDetails = salesResultOverLimit.map((i: { period: string }) => (i.period)).join(',')
+      capInfo.capsSalesOverLimit = false;
+      capInfo.capsSalesOverLimitDetails = salesResultOverLimit.map((i: { period: string }) => (i.period)).join(',');
     }
 
-    capInfo.clicks.day.current = clicksDayCurrent
-    capInfo.clicks.day.limit = clicksDaySetUpLimit
+    capInfo.clicks.day.current = clicksDayCurrent;
+    capInfo.clicks.day.limit = clicksDaySetUpLimit;
 
-    capInfo.clicks.week.current = clicksWeekCurrent
-    capInfo.clicks.week.limit = clicksWeekSetUpLimit
+    capInfo.clicks.week.current = clicksWeekCurrent;
+    capInfo.clicks.week.limit = clicksWeekSetUpLimit;
 
-    capInfo.clicks.month.current = clicksMonthCurrent
-    capInfo.clicks.month.limit = clicksMonthSetupLimit
+    capInfo.clicks.month.current = clicksMonthCurrent;
+    capInfo.clicks.month.limit = clicksMonthSetupLimit;
 
     const conditionsSetupClicks: ICapResult[] = [
       {
-        "period": "day",
-        "limit": clicksDaySetUpLimit,
-        "currentAmount": clicksDayCurrent
+        period: 'day',
+        limit: clicksDaySetUpLimit,
+        currentAmount: clicksDayCurrent,
       },
       {
-        "period": "week",
-        "limit": clicksWeekSetUpLimit,
-        "currentAmount": clicksWeekCurrent
+        period: 'week',
+        limit: clicksWeekSetUpLimit,
+        currentAmount: clicksWeekCurrent,
       },
       {
-        "period": "month",
-        "limit": clicksMonthSetupLimit,
-        "currentAmount": clicksMonthCurrent
+        period: 'month',
+        limit: clicksMonthSetupLimit,
+        currentAmount: clicksMonthCurrent,
       },
-    ]
-    const conditionsSetupClicksNotEmpty = conditionsSetupClicks.filter(i => (i.limit))
+    ];
+    const conditionsSetupClicksNotEmpty = conditionsSetupClicks.filter((i) => (i.limit));
 
-    const clicksResultUnderLimit: ICapResult[] = []
-    const clicksResultOverLimit: ICapResult[] = []
+    const clicksResultUnderLimit: ICapResult[] = [];
+    const clicksResultOverLimit: ICapResult[] = [];
     conditionsSetupClicksNotEmpty.forEach((i: ICapResult) => {
       if (i.currentAmount < i.limit) {
-        clicksResultUnderLimit.push(i)
+        clicksResultUnderLimit.push(i);
       } else {
-        clicksResultOverLimit.push(i)
+        clicksResultOverLimit.push(i);
       }
-    })
+    });
 
     if (clicksResultUnderLimit.length !== 0
       && clicksResultUnderLimit.length === conditionsSetupClicksNotEmpty.length
     ) {
-      capInfo.capsClicksUnderLimit = true
-      capInfo.capsClicksUnderLimitDetails = clicksResultUnderLimit.map((i: { period: string }) => (i.period)).join(',')
-      capInfo.capsType = ICapsType.CAPS_OFFER_UNDER_LIMIT
+      capInfo.capsClicksUnderLimit = true;
+      capInfo.capsClicksUnderLimitDetails = clicksResultUnderLimit.map((i: { period: string }) => (i.period)).join(',');
+      capInfo.capsType = ICapsType.CAPS_OFFER_UNDER_LIMIT;
     } else {
-      capInfo.capsClicksUnderLimit = false
-      capInfo.capsClicksUnderLimitDetails = clicksResultUnderLimit.map((i: { period: string }) => (i.period)).join(',')
+      capInfo.capsClicksUnderLimit = false;
+      capInfo.capsClicksUnderLimitDetails = clicksResultUnderLimit.map((i: { period: string }) => (i.period)).join(',');
     }
 
     if (clicksResultOverLimit.length !== 0) {
-      capInfo.capsClicksOverLimit = true
-      capInfo.capsClicksOverLimitDetails = clicksResultOverLimit.map((i: { period: string }) => (i.period)).join(',')
+      capInfo.capsClicksOverLimit = true;
+      capInfo.capsClicksOverLimitDetails = clicksResultOverLimit.map((i: { period: string }) => (i.period)).join(',');
     } else {
-      capInfo.capsClicksOverLimit = false
-      capInfo.capsClicksOverLimitDetails = clicksResultOverLimit.map((i: { period: string }) => (i.period)).join(',')
+      capInfo.capsClicksOverLimit = false;
+      capInfo.capsClicksOverLimitDetails = clicksResultOverLimit.map((i: { period: string }) => (i.period)).join(',');
     }
 
     if (capInfo.capsClicksOverLimit) {
       if (clicksRedirectOfferUseDefault) {
-        capInfo.exitTrafficClicks = true
-        capInfo.isExitTraffic = true
-        capInfo.offerCapsOfferIdRedirect = offer.offerIdRedirectExitTraffic
-        await setRedirectInfo(
-          offer,
-          IRedirectType.CAPS_OFFERS_CLICKS_OVER_LIMIT,
-          IRedirectReason.CAPS_OFFERS_CLICKS_OVER_LIMIT_EXIT_TRAFFIC
-        )
+        capInfo.exitTrafficClicks = true;
+        capInfo.isExitTraffic = true;
+        capInfo.offerCapsOfferIdRedirect = offerClone.offerIdRedirectExitTraffic;
+        offerClone.redirectType = IRedirectType.CAPS_OFFERS_CLICKS_OVER_LIMIT;
+        offerClone.redirectReason = IRedirectReason.CAPS_OFFERS_CLICKS_OVER_LIMIT_EXIT_TRAFFIC;
       } else {
-        capInfo.capClicksRedirect = true
-        capInfo.offerCapsOfferIdRedirect = clicksRedirectOfferId
-        await setRedirectInfo(
-          offer,
-          IRedirectType.CAPS_OFFERS_CLICKS_OVER_LIMIT,
-          IRedirectReason.CAPS_OFFERS_CLICKS_OVER_LIMIT_CAP_REDIRECT
-        )
+        capInfo.capClicksRedirect = true;
+        capInfo.offerCapsOfferIdRedirect = clicksRedirectOfferId;
+        offerClone.redirectType = IRedirectType.CAPS_OFFERS_CLICKS_OVER_LIMIT;
+        offerClone.redirectReason = IRedirectReason.CAPS_OFFERS_CLICKS_OVER_LIMIT_CAP_REDIRECT;
       }
-      capInfo.capsType = ICapsType.CAPS_OFFER_OVER_LIMIT_ClICKS
+      capInfo.capsType = ICapsType.CAPS_OFFER_OVER_LIMIT_ClICKS;
     }
 
     if (capInfo.capsSalesOverLimit) {
       if (salesRedirectOfferUseDefault) {
-        capInfo.exitTrafficSales = true
-        capInfo.isExitTraffic = true
-        capInfo.offerCapsOfferIdRedirect = offer.offerIdRedirectExitTraffic
-        await setRedirectInfo(
-          offer,
-          IRedirectType.CAPS_OFFERS_SALES_OVER_LIMIT,
-          IRedirectReason.CAPS_OFFERS_SALES_OVER_LIMIT_EXIT_TRAFFIC)
+        capInfo.exitTrafficSales = true;
+        capInfo.isExitTraffic = true;
+        capInfo.offerCapsOfferIdRedirect = offerClone.offerIdRedirectExitTraffic;
+        offerClone.redirectType = IRedirectType.CAPS_OFFERS_SALES_OVER_LIMIT;
+        offerClone.redirectReason = IRedirectReason.CAPS_OFFERS_SALES_OVER_LIMIT_EXIT_TRAFFIC;
       } else {
-        capInfo.capSalesRedirect = true
-        capInfo.offerCapsOfferIdRedirect = salesRedirectOfferId
-        await setRedirectInfo(
-          offer,
-          IRedirectType.CAPS_OFFERS_SALES_OVER_LIMIT,
-          IRedirectReason.CAPS_OFFERS_SALES_OVER_LIMIT_CAP_REDIRECT)
+        capInfo.capSalesRedirect = true;
+        capInfo.offerCapsOfferIdRedirect = salesRedirectOfferId;
+        offerClone.redirectType = IRedirectType.CAPS_OFFERS_SALES_OVER_LIMIT;
+        offerClone.redirectReason = IRedirectReason.CAPS_OFFERS_SALES_OVER_LIMIT_CAP_REDIRECT;
       }
-      capInfo.capsType = ICapsType.CAPS_OFFER_OVER_LIMIT_SALES
+      capInfo.capsType = ICapsType.CAPS_OFFER_OVER_LIMIT_SALES;
     }
 
-    offer.capInfo = capInfo
-    return offer
+    offerClone.capInfo = capInfo;
+    return offerClone;
   } catch (e) {
-    console.log(e)
-    influxdb(500, `re_calculate_offer_caps_error`)
+    consola.error(e);
+    influxdb(500, 're_calculate_offer_caps_error');
   }
-}
-
-const setRedirectInfo = async (
-  offer: IOffer,
-  redirectType: IRedirectType,
-  redirectReason: IRedirectReason
-) => {
-  offer.redirectType = redirectType
-  offer.redirectReason = redirectReason
-}
+};

@@ -75,4 +75,3 @@ export enum ICapsType {
   CAPS_CAMPAIGN_UNDER_LIMIT_SALES = 'campaignUnderLimitSales',
   CAPS_CAMPAIGN_OVER_LIMIT_SALES = 'campaignOverLimitSales',
 }
-

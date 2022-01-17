@@ -10,10 +10,10 @@ export interface ISqsMessage {
 
 export enum ISqsMessageType {
   OFFER = 'offer',
-  CAMPAIGN = 'campaign'
+  CAMPAIGN = 'campaign',
 }
 
 export enum ISqsMessageAction {
   UPDATE_OR_CREATE = 'updateOrCreate',
-  DELETE = 'delete'
+  DELETE = 'delete',
 }
