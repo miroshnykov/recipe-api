@@ -1,24 +1,29 @@
-import {FieldPacket, Pool} from "mysql2/promise";
-import {connect} from "../db/mysql";
+import consola from 'consola';
+import { FieldPacket, Pool } from 'mysql2/promise';
+import { connect } from '../db/mysql';
 
+// eslint-disable-next-line consistent-return
 export const insertMaxmind = async (data: any) => {
   try {
-    const {ip_start, ip_end, ip_int_start, ip_int_end, country_code, country} = data
+    const {
+      // eslint-disable-next-line @typescript-eslint/naming-convention
+      ip_start, ip_end, ip_int_start, ip_int_end, country_code, country,
+    } = data;
 
     const conn: Pool = await connect();
 
-    let sql = `
+    const sql = `
         INSERT INTO maxmind_geo_IP (ip_start, ip_end, ip_int_start, ip_int_end, country_code, country)
         VALUES (?, ?, ?, ?, ?, ?)
-    `
+    `;
     const [response]: [any[], FieldPacket[]] = await conn.query(sql, [ip_start, ip_end, ip_int_start, ip_int_end, country_code, country]);
-    // console.info('responseInsert:', response)
+    consola.info('responseInsert:', response);
     await conn.end();
-    return true
+    return true;
   } catch (e) {
-    console.info(`insertMaxmindErrors:`, e)
+    consola.info('insertMaxmindErrors:', e);
   }
-}
+};
 
 // CREATE TABLE `maxmind_geo_IP` (
 //   `id` INT(1) UNSIGNED ZEROFILL NOT NULL AUTO_INCREMENT,

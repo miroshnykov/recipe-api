@@ -1,4 +1,4 @@
-import {ICapInfo} from "./caps";
+import { ICapInfo } from './caps';
 
 export interface ICampaign {
   campaignId: number,

@@ -1,11 +1,11 @@
 export enum IRecipeType {
   CAMPAIGNS = 'campaigns',
-  OFFERS = 'offers'
+  OFFERS = 'offers',
 }
 
 export enum IRedirectType {
   CAPS_OFFERS_CLICKS_OVER_LIMIT = 'capsOffersClicksOverLimit',
-  CAPS_OFFERS_SALES_OVER_LIMIT = 'capsOffersSalesOverLimit'
+  CAPS_OFFERS_SALES_OVER_LIMIT = 'capsOffersSalesOverLimit',
 }
 
 export enum IRedirectReason {

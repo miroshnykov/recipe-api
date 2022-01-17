@@ -1,5 +1,5 @@
-import {createPool, Pool} from 'mysql2/promise';
-import * as dotenv from "dotenv";
+import { createPool, Pool } from 'mysql2/promise';
+import * as dotenv from 'dotenv';
 
 dotenv.config();
 export async function connect(): Promise<any> {
@@ -9,7 +9,7 @@ export async function connect(): Promise<any> {
     user: process.env.DB_USERNAME,
     password: process.env.DB_PASSWORD,
     database: process.env.DB_NAME,
-    connectionLimit: 10
+    connectionLimit: 10,
   });
   return connection;
 }
