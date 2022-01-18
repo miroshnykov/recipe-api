@@ -31,7 +31,7 @@ export interface IOffer {
   capSetup: boolean | undefined
   capsEnabled: boolean | undefined
   startEndDateSetup: boolean | undefined
-  startEndDateSetting: object
+  startEndDateSetting: IStartEndDateSetting
   customPayOutPerGeo: string
   offersAggregatedIds?: object[]
   capInfo: ICapInfo
@@ -40,6 +40,12 @@ export interface IOffer {
   landingPageUrlOrigin: string | undefined
   redirectType: string | undefined
   redirectReason: string | undefined
+}
+
+export interface IStartEndDateSetting {
+  startDate: Date,
+  endDate: Date,
+  dateRangePass: boolean,
 }
 
 export interface IOffersMargin {

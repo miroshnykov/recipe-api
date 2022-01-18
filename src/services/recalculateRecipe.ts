@@ -3,7 +3,7 @@ import { IOffer, IOfferStatus } from '../interfaces/offers';
 import { findAggregatedOffer, getOffer } from '../models/offersModel';
 import { ISqsMessage, ISqsMessageAction, ISqsMessageType } from '../interfaces/sqsMessage';
 import { influxdb } from '../metrics';
-import { reCalculateOffer } from './offersCaps';
+import { reCalculateOffer } from './offersReCalculations';
 import { ICampaign } from '../interfaces/campaigns';
 import { getCampaign } from '../models/campaignsModel';
 import { reCalculateCampaignCaps } from './campaignsCaps';

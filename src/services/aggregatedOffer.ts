@@ -1,9 +1,8 @@
-import consola from 'consola';
 import { IOffer, IOffersMargin } from '../interfaces/offers';
 // eslint-disable-next-line import/no-cycle
 import { getOffer } from '../models/offersModel';
 // eslint-disable-next-line import/no-cycle
-import { influxdb } from '../metrics';
+import { capsOffersRecalculate, countriesRestrictions, useStartEndDateCheck } from './offersReCalculations';
 
 export const calculateMargin = (offersAggregated: IOffersMargin[]) => offersAggregated.map((i: any) => {
   let margin: number;
@@ -22,27 +21,30 @@ export const calculateMargin = (offersAggregated: IOffersMargin[]) => offersAggr
   };
 }).sort((a: IOffersMargin, b: IOffersMargin) => ((a.margin > b.margin) ? -1 : 1));
 
-export const recalculateChildOffers = async (formatOffers: any) => {
-  const offersFormat: any = [];
-  await Promise.all(formatOffers.map(async (offer: any) => {
+export const recalculateChildOffers = async (marginOffers: IOffersMargin[]) => {
+  const marginOffersResponse: any = [];
+  await Promise.all(marginOffers.map(async (offer: IOffersMargin) => {
     const offerClone = { ...offer };
     const offerData: IOffer = await getOffer(offerClone.aggregatedOfferId);
-    try {
-      const geoRules = JSON.parse(offerData.geoRules);
 
-      if (geoRules.geo) {
-        const countriesList = geoRules?.geo?.map((i: { country: string; }) => (i.country));
-        if (countriesList.length !== 0) {
-          offerClone.countriesRestrictions = countriesList.join(',');
-        }
-      }
-    } catch (e) {
-      consola.error(`Wrong format for offerId:${offerData.offerId} `, offerData.geoRules);
-      influxdb(500, 're_calculate_offer_geo_wrong_format_error');
+    const countriesRestrictionsRes = countriesRestrictions(offerData);
+    if (countriesRestrictionsRes.success) {
+      offerClone.countriesRestrictions = countriesRestrictionsRes?.offer?.countriesRestrictions;
     }
 
-    offersFormat.push(offerClone);
+    const capsOffersRecalculateRes = await capsOffersRecalculate(offerData);
+    if (capsOffersRecalculateRes.success) {
+      offerClone.capsOverLimitSales = capsOffersRecalculateRes?.offer?.capInfo?.capsSalesOverLimit!;
+      offerClone.capsOverLimitClicks = capsOffersRecalculateRes?.offer?.capInfo?.capsClicksOverLimit!;
+    }
+
+    const useStartEndDateCheckRes = await useStartEndDateCheck(offerData);
+    if (useStartEndDateCheckRes.success) {
+      offerClone.dateRangeNotPass = useStartEndDateCheckRes?.offer?.startEndDateSetting?.dateRangePass;
+    }
+
+    marginOffersResponse.push(offerClone);
   }));
 
-  return offersFormat;
+  return marginOffersResponse;
 };
