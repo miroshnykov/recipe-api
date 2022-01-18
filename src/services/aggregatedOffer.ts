@@ -1,8 +1,9 @@
+import consola from 'consola';
 import { IOffer, IOffersMargin } from '../interfaces/offers';
 // eslint-disable-next-line import/no-cycle
 import { getOffer } from '../models/offersModel';
 // eslint-disable-next-line import/no-cycle
-import { reCalculateOffer } from './offersCaps';
+import { influxdb } from '../metrics';
 
 export const calculateMargin = (offersAggregated: IOffersMargin[]) => offersAggregated.map((i: any) => {
   let margin: number;
@@ -26,33 +27,20 @@ export const recalculateChildOffers = async (formatOffers: any) => {
   await Promise.all(formatOffers.map(async (offer: any) => {
     const offerClone = { ...offer };
     const offerData: IOffer = await getOffer(offerClone.aggregatedOfferId);
-    const offerInfo = await reCalculateOffer(offerData);
+    try {
+      const geoRules = JSON.parse(offerData.geoRules);
 
-    if ('capsEnabled' in offerInfo && offerInfo?.capsEnabled!) {
-      if (offerInfo?.capInfo?.capsSalesOverLimit) {
-        offerClone.capsOverLimitSales = offerInfo?.capInfo?.capsSalesOverLimit;
+      if (geoRules.geo) {
+        const countriesList = geoRules?.geo?.map((i: { country: string; }) => (i.country));
+        if (countriesList.length !== 0) {
+          offerClone.countriesRestrictions = countriesList.join(',');
+        }
       }
-      if (offerInfo?.capInfo?.capsClicksOverLimit) {
-        offerClone.capsOverLimitClicks = offerInfo?.capInfo?.capsClicksOverLimit;
-      }
+    } catch (e) {
+      consola.error(`Wrong format for offerId:${offerData.offerId} `, offerData.geoRules);
+      influxdb(500, 're_calculate_offer_geo_wrong_format_error');
     }
 
-    if ('startEndDateSetup' in offerInfo && offerInfo.startEndDateSetup) {
-      // @ts-ignore
-      if (!offerInfo.startEndDateSetting.dateRangePass) {
-        offerClone.dateRangeNotPass = true;
-      }
-    }
-
-    offerClone.countriesRestrictions = offerData.countriesRestrictions;
-
-    const customLpRules = JSON.parse(offerData.customLpRules);
-    if (customLpRules) {
-      const customLpCountriesList = customLpRules.customLPRules.map((i: { country: string; }) => (i.country));
-      if (customLpCountriesList.length !== 0) {
-        offerClone.customLpCountriesRestrictions = customLpCountriesList.join(',');
-      }
-    }
     offersFormat.push(offerClone);
   }));
 
