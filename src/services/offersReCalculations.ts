@@ -5,7 +5,7 @@ import {
 } from '../models/offersModel';
 import { influxdb } from '../metrics';
 
-import { IOffer } from '../interfaces/offers';
+import { IOffer, IOffersMargin } from '../interfaces/offers';
 import {
   ICapInfo, ICapResult, ICaps, ICapsType,
 } from '../interfaces/caps';
@@ -13,61 +13,118 @@ import { IRedirectReason, IRedirectType } from '../interfaces/recipeTypes';
 // eslint-disable-next-line import/no-cycle
 import { calculateMargin, recalculateChildOffers } from './aggregatedOffer';
 
+export const countriesRestrictions = (offer:IOffer) => {
+  const offerClone = { ...offer };
+  let pass:boolean = false;
+  if (offerClone.geoRules) {
+    try {
+      const geoRules = JSON.parse(offerClone.geoRules);
+      if (geoRules.geo) {
+        const countriesList = geoRules?.geo?.map((i: { country: string; }) => (i.country));
+        if (countriesList.length !== 0) {
+          offerClone.countriesRestrictions = countriesList.join(',');
+          pass = true;
+        }
+      }
+    } catch (e) {
+      consola.error(`Wrong format for offerId:${offerClone.offerId} `, offerClone.geoRules);
+      influxdb(500, 're_calculate_offer_geo_wrong_format_error');
+    }
+  }
+
+  return {
+    success: pass,
+    offer: offerClone,
+  };
+};
+
+export const capsOffersRecalculate = async (offer:IOffer) => {
+  let pass:boolean = false;
+  const offerClone = { ...offer };
+  if (offerClone.capsEnabled) {
+    // eslint-disable-next-line @typescript-eslint/no-use-before-define
+    const offerCaps = await reCalculateOfferCaps(offerClone.offerId);
+    if (offerCaps?.capSetup && offerCaps?.capInfo) {
+      offerClone.capInfo = offerCaps.capInfo;
+      offerClone.capSetup = offerCaps.capSetup;
+      offerClone.landingPageUrlOrigin = offerCaps.landingPageUrl;
+      offerClone.redirectType = offerCaps.redirectType;
+      offerClone.redirectReason = offerCaps.redirectReason;
+    }
+    // eslint-disable-next-line @typescript-eslint/no-use-before-define
+    offerClone.exitOffersNested = await exitOffersNested(offerClone);
+    // eslint-disable-next-line @typescript-eslint/no-use-before-define
+    offerClone.exitOfferDetected = offerClone.exitOffersNested.length !== 0 ? exitOfferDetecting(offerClone.exitOffersNested) : [];
+    pass = true;
+  }
+
+  return {
+    success: pass,
+    offer: offerClone,
+  };
+};
+
+export const useStartEndDateCheck = async (offer:IOffer) => {
+  let pass:boolean = false;
+  const offerClone = { ...offer };
+  if (offerClone.useStartEndDate) {
+    offerClone.startEndDateSetup = true;
+    const currentDate = new Date();
+    offerClone.startEndDateSetting = {
+      startDate: offerClone.startDate,
+      endDate: offerClone.endDate,
+      dateRangePass: currentDate > offerClone.startDate && currentDate < offerClone.endDate,
+    };
+    pass = true;
+  }
+  return {
+    success: pass,
+    offer: offerClone,
+  };
+};
+
+export const customPayOutCheck = async (offer:IOffer) => {
+  let pass:boolean = false;
+  const offerClone = { ...offer };
+  if (offerClone.customPayOutCount > 0) {
+    const customPayOutData = await getCustomPayoutPerGeo(offerClone.offerId);
+    offerClone.customPayOutPerGeo = JSON.stringify(customPayOutData);
+    pass = true;
+  }
+  return {
+    success: pass,
+    offer: offerClone,
+  };
+};
+
 export const reCalculateOffer = async (offer: IOffer) => {
   try {
-    const offerClone = { ...offer };
+    let offerClone = { ...offer };
     if (offerClone.type === 'aggregated') {
       const offersAggregated = await getAggregatedOffers(offerClone.offerId) || [];
-      const marginOffers = calculateMargin(offersAggregated);
+      const marginOffers:IOffersMargin[] = calculateMargin(offersAggregated);
       offerClone.offersAggregatedIds = await recalculateChildOffers(marginOffers);
     }
-
-    if (offerClone.geoRules) {
-      try {
-        const geoRules = JSON.parse(offerClone.geoRules);
-        if (geoRules.geo) {
-          const countriesList = geoRules?.geo?.map((i: { country: string; }) => (i.country));
-          if (countriesList.length !== 0) {
-            offerClone.countriesRestrictions = countriesList.join(',');
-            // offerClone.geoRules = '';
-          }
-        }
-      } catch (e) {
-        consola.error(`Wrong format for offerId:${offerClone.offerId} `, offerClone.geoRules);
-        influxdb(500, 're_calculate_offer_geo_wrong_format_error');
-      }
-    }
-    if (offerClone.capsEnabled) {
-      // eslint-disable-next-line @typescript-eslint/no-use-before-define
-      const offerCaps = await reCalculateOfferCaps(offerClone.offerId);
-      if (offerCaps?.capSetup && offerCaps?.capInfo) {
-        offerClone.capInfo = offerCaps.capInfo;
-        offerClone.capSetup = offerCaps.capSetup;
-        offerClone.landingPageUrlOrigin = offerCaps.landingPageUrl;
-        offerClone.redirectType = offerCaps.redirectType;
-        offerClone.redirectReason = offerCaps.redirectReason;
-      }
-      // consola.info(`OfferId:${offer.offerId}`)
-      // eslint-disable-next-line @typescript-eslint/no-use-before-define
-      offerClone.exitOffersNested = await exitOffersNested(offerClone);
-      // eslint-disable-next-line @typescript-eslint/no-use-before-define
-      offerClone.exitOfferDetected = offerClone.exitOffersNested.length !== 0 ? exitOfferDetecting(offerClone.exitOffersNested) : [];
+    const countriesRestrictionsRes = countriesRestrictions(offerClone);
+    if (countriesRestrictionsRes.success) {
+      offerClone = { ...countriesRestrictionsRes.offer, ...offerClone };
     }
 
-    if (offerClone.useStartEndDate) {
-      offerClone.startEndDateSetup = true;
-      const currentDate = new Date();
-      offerClone.startEndDateSetting = {
-        startDate: offerClone.startDate,
-        endDate: offerClone.endDate,
-        dateRangePass: currentDate > offerClone.startDate && currentDate < offerClone.endDate,
-      };
+    const capsOffersRecalculateRes = await capsOffersRecalculate(offerClone);
+    if (capsOffersRecalculateRes.success) {
+      offerClone = { ...capsOffersRecalculateRes.offer, ...offerClone };
     }
 
-    if (offerClone.customPayOutCount > 0) {
-      const customPayOutData = await getCustomPayoutPerGeo(offerClone.offerId);
-      offerClone.customPayOutPerGeo = JSON.stringify(customPayOutData);
+    const useStartEndDateCheckRes = await useStartEndDateCheck(offerClone);
+    if (useStartEndDateCheckRes.success) {
+      offerClone = { ...useStartEndDateCheckRes.offer, ...offerClone };
     }
+
+    const customPayOutCheckRes = await customPayOutCheck(offerClone);
+    if (customPayOutCheckRes.success) {
+      offerClone = { ...customPayOutCheckRes.offer, ...offerClone };
+    }
+
     offerClone.payin = Number(offerClone.payin);
     offerClone.payout = Number(offerClone.payout);
     return offerClone;

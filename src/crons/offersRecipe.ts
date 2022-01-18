@@ -4,7 +4,7 @@ import fileSystem from 'fs';
 import os from 'os';
 import { compressFile, deleteFile, memorySizeOfBite } from '../utils';
 import { getOffers } from '../models/offersModel';
-import { reCalculateOffer } from '../services/offersCaps';
+import { reCalculateOffer } from '../services/offersReCalculations';
 import { influxdb } from '../metrics';
 import { setFileSize } from './setFileSize';
 import { IRecipeType } from '../interfaces/recipeTypes';
