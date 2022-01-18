@@ -29,7 +29,7 @@ export const reCalculateOffer = async (offer: IOffer) => {
           const countriesList = geoRules?.geo?.map((i: { country: string; }) => (i.country));
           if (countriesList.length !== 0) {
             offerClone.countriesRestrictions = countriesList.join(',');
-            offerClone.geoRules = '';
+            // offerClone.geoRules = '';
           }
         }
       } catch (e) {
