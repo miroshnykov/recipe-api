@@ -24,12 +24,25 @@ export const setOffersRecipe = async () => {
       influxdb(500, 'recipe_offers_created_error');
       return;
     }
-    const promises = [];
+    // const promises = [];
+    // for (const offer of offers) {
+    //   const reCalcOffer = reCalculateOffer(offer);
+    //   promises.push(reCalcOffer);
+    // }
+    // const offerFormat = await Promise.all(promises);
+
+    // await Promise.all(offers.map(async (offer) => {
+    //   const reCalcOffer: IOffer = <IOffer> await reCalculateOffer(offer);
+    //   offerFormat.push(reCalcOffer);
+    // }));
+
+    const offerFormat: IOffer[] = [];
     for (const offer of offers) {
-      const reCalcOffer = reCalculateOffer(offer);
-      promises.push(reCalcOffer);
+      // eslint-disable-next-line no-await-in-loop
+      const reCalcOffer: IOffer = <IOffer> await reCalculateOffer(offer);
+      offerFormat.push(reCalcOffer);
     }
-    const offerFormat = await Promise.all(promises);
+
     const endTime: number = new Date().getTime();
     const speedTime: number = endTime - startTime;
     consola.info(`Recalculate offers done speedTime: { ${speedTime}ms }`);

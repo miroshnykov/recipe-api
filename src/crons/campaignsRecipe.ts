@@ -24,17 +24,18 @@ export const setCampaignsRecipe = async () => {
       influxdb(500, 'recipe_campaigns_created_error');
       return;
     }
-    // const campaignsFormat: ICampaign[] = [];
-    const promises = [];
+    // const promises = [];
+    const campaignsFormat: ICampaign[] = [];
     for (const campaign of campaigns) {
       if (campaign.capsEnabled) {
-        const reCalcCampaign = reCalculateCampaignCaps(campaign.campaignId);
-        promises.push(reCalcCampaign);
+        // eslint-disable-next-line no-await-in-loop
+        const reCalcCampaign: ICampaign = <ICampaign> await reCalculateCampaignCaps(campaign.campaignId);
+        campaignsFormat.push(reCalcCampaign);
       } else {
-        promises.push(campaign);
+        campaignsFormat.push(campaign);
       }
     }
-    const campaignsFormat = await Promise.all(promises);
+    // const campaignsFormat = await Promise.all(promises);
     const endTime: number = new Date().getTime();
     const speedTime: number = endTime - startTime;
 
