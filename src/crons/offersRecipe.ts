@@ -37,8 +37,7 @@ export const setOffersRecipe = async () => {
     // }));
 
     const offerFormat: IOffer[] = [];
-    for (const offer of offers) {
-      // eslint-disable-next-line no-await-in-loop
+    for await (const offer of offers) {
       const reCalcOffer: IOffer = <IOffer> await reCalculateOffer(offer);
       offerFormat.push(reCalcOffer);
     }

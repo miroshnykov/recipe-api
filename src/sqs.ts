@@ -41,12 +41,18 @@ export const sqsProcess = async () => {
     }
     const messages:any = [];
 
-    await Promise.all(dataQueue.Messages.map(async (message) => {
+    // await Promise.all(dataQueue.Messages.map(async (message) => {
+    //   const messagesUpd: ISqsMessage[] = await recalculateRecipe(message);
+    //   for (const messageUpd of messagesUpd) {
+    //     messages.push(messageUpd);
+    //   }
+    // }));
+    for await (const message of dataQueue.Messages) {
       const messagesUpd: ISqsMessage[] = await recalculateRecipe(message);
       for (const messageUpd of messagesUpd) {
         messages.push(messageUpd);
       }
-    }));
+    }
 
     return messages;
   } catch (e) {

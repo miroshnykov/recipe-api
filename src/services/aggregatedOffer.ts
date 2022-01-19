@@ -23,7 +23,7 @@ export const calculateMargin = (offersAggregated: IOffersMargin[]) => offersAggr
 
 export const recalculateChildOffers = async (marginOffers: IOffersMargin[]) => {
   const marginOffersResponse: any = [];
-  await Promise.all(marginOffers.map(async (offer: IOffersMargin) => {
+  for await (const offer of marginOffers) {
     const offerClone = { ...offer };
     const offerData: IOffer = await getOffer(offerClone.aggregatedOfferId);
 
@@ -44,7 +44,29 @@ export const recalculateChildOffers = async (marginOffers: IOffersMargin[]) => {
     }
 
     marginOffersResponse.push(offerClone);
-  }));
+  }
+  // await Promise.all(marginOffers.map(async (offer: IOffersMargin) => {
+  //   const offerClone = { ...offer };
+  //   const offerData: IOffer = await getOffer(offerClone.aggregatedOfferId);
+  //
+  //   const countriesRestrictionsRes = countriesRestrictions(offerData);
+  //   if (countriesRestrictionsRes.success) {
+  //     offerClone.countriesRestrictions = countriesRestrictionsRes?.offer?.countriesRestrictions;
+  //   }
+  //
+  //   const capsOffersRecalculateRes = await capsOffersRecalculate(offerData);
+  //   if (capsOffersRecalculateRes.success) {
+  //     offerClone.capsOverLimitSales = capsOffersRecalculateRes?.offer?.capInfo?.capsSalesOverLimit!;
+  //     offerClone.capsOverLimitClicks = capsOffersRecalculateRes?.offer?.capInfo?.capsClicksOverLimit!;
+  //   }
+  //
+  //   const useStartEndDateCheckRes = await useStartEndDateCheck(offerData);
+  //   if (useStartEndDateCheckRes.success) {
+  //     offerClone.dateRangeNotPass = useStartEndDateCheckRes?.offer?.startEndDateSetting?.dateRangePass;
+  //   }
+  //
+  //   marginOffersResponse.push(offerClone);
+  // }));
 
   return marginOffersResponse;
 };
