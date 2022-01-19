@@ -18,7 +18,7 @@ import { influxdb } from './metrics';
 import { ICampaign } from './interfaces/campaigns';
 import { getCampaigns } from './models/campaignsModel';
 import { reCalculateCampaignCaps } from './services/campaignsCaps';
-import { reCalculateOffer, reCalculateOfferCaps } from './services/offersCaps';
+import { reCalculateOffer, reCalculateOfferCaps } from './services/offersReCalculations';
 import { ISqsMessage } from './interfaces/sqsMessage';
 import { testLinksCampaigns, testLinksOffers } from './tests/links';
 import { IOffer } from './interfaces/offers';
@@ -116,7 +116,7 @@ app.get('/fileSizeInfoRedis', async (req: Request, res: Response) => {
 app.get('/caps', async (req: Request, res: Response) => {
   try {
     // let offers:IOffer[] = await getOffers()||[]
-    const caps = await reCalculateOfferCaps(36810);
+    const caps = await reCalculateOfferCaps(36818);
     // let caps = await reCalculateOfferCaps(35899)
     // let offer = await getOffer(19)
     res.json({
@@ -166,7 +166,10 @@ app.get('/link', async (req: Request, res: Response) => {
 
 app.get('/reCalculateOffer', async (req: Request, res: Response) => {
   try {
-    const offerId = 36670;
+    // reqular 36816
+    // aggregated  36817
+    // caps  36815
+    const offerId = 36817;
     const offer: IOffer = await getOffer(offerId);
     const reCalcOfferRes = await reCalculateOffer(offer);
 
