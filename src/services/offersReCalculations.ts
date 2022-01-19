@@ -436,7 +436,7 @@ export const reCalculateOfferCaps = async (offerId: number) => {
     offerClone.capInfo = capInfo;
     return offerClone;
   } catch (e) {
-    consola.error(e);
+    consola.error('reCalculateOfferCapsError:', e);
     influxdb(500, 're_calculate_offer_caps_error');
   }
 };

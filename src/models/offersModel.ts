@@ -78,7 +78,7 @@ export const findAggregatedOffer = async (offerId: number) => {
 
     return aggregatedOfferData.length !== 0 ? aggregatedOfferData[0] : {};
   } catch (e) {
-    consola.error('capsErr:', e);
+    consola.error('findAggregatedOfferErr:', e);
     influxdb(500, 'find_aggregated_offer_error');
   }
 };
@@ -155,7 +155,7 @@ export const getOfferCaps = async (offerId: number) => {
 
     return offerCaps.length !== 0 ? offerCaps[0] : [];
   } catch (e) {
-    consola.error('capsErr:', e);
+    consola.error('getOfferCapsErr:', e);
     influxdb(500, 'get_caps_offer_error');
   }
 };
@@ -180,7 +180,7 @@ export const getCustomPayoutPerGeo = async (offerId: number) => {
 
     return customPayOutData;
   } catch (e) {
-    consola.error('capsErr:', e);
+    consola.error('getCustomPayoutPerGeoErr:', e);
     influxdb(500, 'get_custom_payout_error');
   }
 };
@@ -239,7 +239,7 @@ export const getOffer = async (id: number) => {
 
     return offer.length !== 0 ? offer[0] : [];
   } catch (e) {
-    consola.error(e);
+    consola.error('getOfferError:', e);
     influxdb(500, 'get_offer_error');
   }
 };
