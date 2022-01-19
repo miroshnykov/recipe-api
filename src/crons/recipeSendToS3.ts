@@ -1,73 +1,69 @@
-import fs from "fs";
-import {promises as fsPromises} from 'fs';
-import AWS from 'aws-sdk'
-import consola from "consola";
-import {ManagedUpload} from "aws-sdk/lib/s3/managed_upload";
-import * as dotenv from "dotenv";
-import {influxdb} from "../metrics";
-import {IRecipeType} from "../interfaces/recipeTypes";
-import SendData = ManagedUpload.SendData;
-import {setFileSize} from "./setFileSize";
+import { promises as fsPromises } from 'fs';
+import AWS from 'aws-sdk';
+import consola from 'consola';
+import * as dotenv from 'dotenv';
+import { influxdb } from '../metrics';
+import { IRecipeType } from '../interfaces/recipeTypes';
 
 dotenv.config();
 
 AWS.config.update({
   accessKeyId: process.env.AWS_ACCESS_KEY_ID,
   secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-  region: process.env.AWS_REGION
+  region: process.env.AWS_REGION,
 });
 
 const s3 = new AWS.S3();
 
+// eslint-disable-next-line consistent-return
 export const uploadFileToS3Bucket = async (type: IRecipeType): Promise<boolean | undefined> => {
   try {
-    let tempFileName: string = ''
-    let s3Key: string = ''
-    let s3BucketName: string = ''
+    let tempFileName: string = '';
+    let s3Key: string = '';
+    let s3BucketName: string = '';
     switch (type) {
       case IRecipeType.OFFERS:
-        tempFileName = process.env.OFFERS_RECIPE_PATH + '.gz' || ''
-        s3Key = process.env.S3_OFFERS_RECIPE_PATH || ''
-        s3BucketName = process.env.S3_BUCKET_NAME || ''
+        tempFileName = `${process.env.OFFERS_RECIPE_PATH}.gz` || '';
+        s3Key = process.env.S3_OFFERS_RECIPE_PATH || '';
+        s3BucketName = process.env.S3_BUCKET_NAME || '';
         break;
       case IRecipeType.CAMPAIGNS:
-        tempFileName = process.env.CAMPAIGNS_RECIPE_PATH + '.gz' || ''
-        s3Key = process.env.S3_CAMPAIGNS_RECIPE_PATH || ''
-        s3BucketName = process.env.S3_BUCKET_NAME || ''
+        tempFileName = `${process.env.CAMPAIGNS_RECIPE_PATH}.gz` || '';
+        s3Key = process.env.S3_CAMPAIGNS_RECIPE_PATH || '';
+        s3BucketName = process.env.S3_BUCKET_NAME || '';
         break;
       default:
-        throw Error(`${type} not define, not able to get file from s3 `)
+        throw Error(`${type} not define, not able to get file from s3 `);
     }
 
-    const fileData = await fsPromises.readFile(tempFileName)
+    const fileData = await fsPromises.readFile(tempFileName);
     const params = {
       Bucket: s3BucketName,
       Key: s3Key,
-      Body: fileData
-    }
-    const uploadResponse = await s3.upload(params).promise().catch(e => {
-      consola.error(`fileS3UploadBucketError:${s3Key} s3BucketName:${s3BucketName}`, e)
-      influxdb(500, `recipe_${type}_uploaded_to_s3_error`)
-    })
+      Body: fileData,
+    };
+    const uploadResponse = await s3.upload(params).promise().catch((e) => {
+      consola.error(`fileS3UploadBucketError:${s3Key} s3BucketName:${s3BucketName}`, e);
+      influxdb(500, `recipe_${type}_uploaded_to_s3_error`);
+    });
     if (uploadResponse) {
-      influxdb(200, `recipe_${type}_uploaded_to_s3`)
+      influxdb(200, `recipe_${type}_uploaded_to_s3`);
       consola.info(`File ${type} uploaded successfully at ${uploadResponse.Location}`);
-      return true
+      return true;
     }
-
   } catch (error) {
-    influxdb(500, `recipe_${type}_uploaded_to_s3_error`)
-    console.error('s3 upload error:', error)
+    influxdb(500, `recipe_${type}_uploaded_to_s3_error`);
+    consola.error('s3 upload error:', error);
   }
-}
+};
 
 export const checkSizeOfferFileFromS3Bucket = async () => {
-  let s3Key = process.env.S3_OFFERS_RECIPE_PATH || ''
-  let s3BucketName = process.env.S3_BUCKET_NAME || ''
-  let params = {Bucket: s3BucketName, Key: s3Key}
+  const s3Key = process.env.S3_OFFERS_RECIPE_PATH || '';
+  const s3BucketName = process.env.S3_BUCKET_NAME || '';
+  const params = { Bucket: s3BucketName, Key: s3Key };
   return s3.headObject(params!).promise()
-    .then(res => res.ContentLength)
-    .catch(e => {
-      consola.error('checkSizeOfferFileFromS3BucketError', e)
-    })
-}
+    .then((res) => res.ContentLength)
+    .catch((e) => {
+      consola.error('checkSizeOfferFileFromS3BucketError', e);
+    });
+};

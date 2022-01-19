@@ -1,13 +1,14 @@
-import {FieldPacket, Pool, RowDataPacket} from "mysql2/promise";
-import {connect} from "../db/mysql";
-import consola from "consola";
-import {influxdb} from "../metrics";
+import { FieldPacket, Pool } from 'mysql2/promise';
+import consola from 'consola';
+import { connect } from '../db/mysql';
+import { influxdb } from '../metrics';
 
+// eslint-disable-next-line consistent-return
 export const getCampaigns = async () => {
   try {
     const conn: Pool = await connect();
 
-    let sql = `
+    const sql = `
         SELECT c.id                       AS campaignId,
                c.name                     AS name,
                c.sfl_offer_id             AS offerId,
@@ -21,24 +22,22 @@ export const getCampaigns = async () => {
                  LEFT JOIN sfl_offer_campaign_cap cap ON cap.sfl_offer_campaign_id = c.id AND cap.enabled = true
         WHERE c.status = 'active'
 --          and c.id in (998960, 49)
-    `
+    `;
     const [campaigns]: [any[], FieldPacket[]] = await conn.query(sql);
     await conn.end();
 
-    return campaigns
-
+    return campaigns;
   } catch (e) {
-    consola.error('getCampaignsError:', e)
-    influxdb(500, `get_campaigns_error`)
-    return []
+    consola.error('getCampaignsError:', e);
+    influxdb(500, 'get_campaigns_error');
   }
-}
+};
 
 export const getCampaign = async (id: number) => {
   try {
     const conn: Pool = await connect();
 
-    let sql = `
+    const sql = `
         SELECT c.id                   AS campaignId,
                c.name                 AS name,
                c.sfl_offer_id         AS offerId,
@@ -51,23 +50,22 @@ export const getCampaign = async (id: number) => {
                  LEFT JOIN sfl_affiliates a ON a.id = c.affiliate_id
                  LEFT JOIN sfl_offer_campaign_cap cap ON cap.sfl_offer_campaign_id = c.id AND cap.enabled = true
         WHERE c.id = ${id}
-    `
+    `;
     const [campaign]: [any[], FieldPacket[]] = await conn.query(sql);
     await conn.end();
-    return campaign.length !== 0 ? campaign[0] : []
-
+    return campaign.length !== 0 ? campaign[0] : [];
   } catch (e) {
-    consola.error('getCampaignError:', e)
-    influxdb(500, `get_campaign_error`)
-    return []
+    consola.error('getCampaignError:', e);
+    influxdb(500, 'get_campaign_error');
+    return [];
   }
-}
+};
 
 export const getCampaignCaps = async (id: number) => {
   try {
     const conn: Pool = await connect();
 
-    let sql = `
+    const sql = `
         SELECT c.id                         AS campaignId,
                cap.clicks_day               AS clicksDaySetUpLimit,
                cap.clicks_week              AS clicksWeekSetUpLimit,
@@ -92,14 +90,13 @@ export const getCampaignCaps = async (id: number) => {
                            ON c.id = capData.sfl_offer_campaign_id
         WHERE c.id = ${id}
           AND cap.enabled = true
-    `
+    `;
     const [campaignCaps]: [any[], FieldPacket[]] = await conn.query(sql);
     await conn.end();
-    return campaignCaps.length !== 0 ? campaignCaps[0] : []
-
+    return campaignCaps.length !== 0 ? campaignCaps[0] : [];
   } catch (e) {
-    consola.error('getCampaignCapsError:', e)
-    influxdb(500, `get_campaign_caps_error`)
-    return []
+    consola.error('getCampaignCapsError:', e);
+    influxdb(500, 'get_campaign_caps_error');
+    return [];
   }
-}
+};

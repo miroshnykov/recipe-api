@@ -1,14 +1,13 @@
-import {FieldPacket, Pool} from "mysql2/promise";
-import {connect} from "../db/mysql";
-import consola from "consola";
-import {influxdb} from "../metrics";
-import {IOffer, IOffersMargin} from "../interfaces/offers";
-import {reCalculateOffer} from "../services/offersCaps";
+import { FieldPacket, Pool } from 'mysql2/promise';
+import consola from 'consola';
+import { connect } from '../db/mysql';
+import { influxdb } from '../metrics';
 
+// eslint-disable-next-line consistent-return
 export const getOffers = async () => {
   try {
     const conn: Pool = await connect();
-    let sql = `
+    const sql = `
         SELECT o.id                                                                          AS offerId,
                o.name                                                                        AS name,
                a.id                                                                          AS advertiserId,
@@ -52,20 +51,19 @@ export const getOffers = async () => {
                  left join sfl_offers_cap c
                            ON c.sfl_offer_id = o.id
         WHERE o.status NOT IN  ('inactive','draft') and o.deleted_at IS NULL
-    `
+    `;
     const [offers]: [any[], FieldPacket[]] = await conn.query(sql);
     await conn.end();
 
     // console.log('Offers count:', offers.length)
-    return offers
-
+    return offers;
   } catch (e) {
-    consola.error('getOffersError:', e)
-    influxdb(500, `get_offers_error`)
-    return []
+    consola.error('getOffersError:', e);
+    influxdb(500, 'get_offers_error');
   }
-}
+};
 
+// eslint-disable-next-line consistent-return
 export const findAggregatedOffer = async (offerId: number) => {
   try {
     const conn: Pool = await connect();
@@ -73,18 +71,19 @@ export const findAggregatedOffer = async (offerId: number) => {
         SELECT aggr.sfl_offer_aggregated_id
         FROM sfl_offers_aggregated aggr
         WHERE sfl_offer_id = ${offerId}
-    `
+    `;
 
-    const [aggregatedOfferData]: [any[], FieldPacket[]] = await conn.query(aggregatedOfferSql)
+    const [aggregatedOfferData]: [any[], FieldPacket[]] = await conn.query(aggregatedOfferSql);
     await conn.end();
 
-    return aggregatedOfferData.length !== 0 && aggregatedOfferData[0] || {}
+    return aggregatedOfferData.length !== 0 ? aggregatedOfferData[0] : {};
   } catch (e) {
-    consola.error('capsErr:', e)
-    influxdb(500, `find_aggregated_offer_error`)
+    consola.error('findAggregatedOfferErr:', e);
+    influxdb(500, 'find_aggregated_offer_error');
   }
-}
+};
 
+// eslint-disable-next-line consistent-return
 export const getAggregatedOffers = async (id: number) => {
   try {
     const conn: Pool = await connect();
@@ -104,67 +103,19 @@ export const getAggregatedOffers = async (id: number) => {
         ON o.id = m.sfl_offer_id
         WHERE m.sfl_offer_aggregated_id = ${id} and o.status NOT IN ('inactive','draft') and o.deleted_at IS NULL
         ORDER BY o.payin - o.payout DESC
-    `
+    `;
     const [offersAggregated]: [any[], FieldPacket[]] = await conn.query(sql);
 
     await conn.end();
 
-    const calculateMargin: IOffersMargin[] = offersAggregated.map(i => {
-      let margin: number
-      if (i.rate) {
-        const payInEx: number = Number(i.payin) * Number(i.rate)
-        const payOutEx: number = Number(i.payout) * Number(i.rate)
-        margin = Math.round((payInEx - payOutEx + Number.EPSILON) * 100) / 100;
-      } else {
-        margin = Math.round((Number(i.payin) - Number(i.payout) + Number.EPSILON) * 100) / 100;
-      }
-      const aggregatedOfferId: number = i.aggregatedOfferId
-
-      return {
-        aggregatedOfferId,
-        margin
-      }
-    })
-
-    let formatOffers = calculateMargin.sort((a: IOffersMargin, b: IOffersMargin) => (a.margin > b.margin) ? -1 : 1)
-    for (let offer of formatOffers) {
-      let offerInfo_: IOffer = await getOffer(offer.aggregatedOfferId)
-      let offerInfo = await reCalculateOffer(offerInfo_)
-
-      if ("capsEnabled" in offerInfo && offerInfo?.capsEnabled!) {
-        if (offerInfo?.capInfo?.capsSalesOverLimit) {
-          offer.capsOverLimitSales = offerInfo?.capInfo?.capsSalesOverLimit
-        }
-        if (offerInfo?.capInfo?.capsClicksOverLimit) {
-          offer.capsOverLimitClicks = offerInfo?.capInfo?.capsClicksOverLimit
-        }
-      }
-
-      if ("startEndDateSetup" in offerInfo && offerInfo.startEndDateSetup) {
-        // @ts-ignore
-        if (!offerInfo.startEndDateSetting.dateRangePass) {
-          offer.dateRangeNotPass = true
-        }
-      }
-
-      offer.countriesRestrictions = offerInfo_.countriesRestrictions
-
-      const customLpRules = JSON.parse(offerInfo_.customLpRules)
-      if (customLpRules) {
-        const customLpCountriesList = customLpRules.customLPRules.map((i: { country: string; }) => (i.country))
-        if (customLpCountriesList.length !== 0) {
-          offer.customLpCountriesRestrictions = customLpCountriesList.join(',')
-        }
-      }
-    }
-
-    return formatOffers
+    return offersAggregated;
   } catch (e) {
-    consola.error(e)
-    influxdb(500, `get_aggregated_offer_error`)
+    consola.error(e);
+    influxdb(500, 'get_aggregated_offer_error');
   }
-}
+};
 
+// eslint-disable-next-line consistent-return
 export const getOfferCaps = async (offerId: number) => {
   try {
     const conn: Pool = await connect();
@@ -196,19 +147,20 @@ export const getOfferCaps = async (offerId: number) => {
                            ON c1.sfl_offer_id = o.id
         WHERE o.id = ${offerId}
           AND c.enabled = true
-    `
-    const [offerCaps]: [any[], FieldPacket[]] = await conn.query(capSql)
+    `;
+    const [offerCaps]: [any[], FieldPacket[]] = await conn.query(capSql);
     await conn.end();
 
     // consola.info('offerCaps:', offerCaps[0])
 
-    return offerCaps.length !== 0 ? offerCaps[0] : []
+    return offerCaps.length !== 0 ? offerCaps[0] : [];
   } catch (e) {
-    consola.error('capsErr:', e)
-    influxdb(500, `get_caps_offer_error`)
+    consola.error('getOfferCapsErr:', e);
+    influxdb(500, 'get_caps_offer_error');
   }
-}
+};
 
+// eslint-disable-next-line consistent-return
 export const getCustomPayoutPerGeo = async (offerId: number) => {
   try {
     const conn: Pool = await connect();
@@ -221,18 +173,19 @@ export const getCustomPayoutPerGeo = async (offerId: number) => {
                p.payout_percent as payoutPercent
         FROM sfl_offers_custom_payout p
         WHERE p.sfl_offer_id = ${offerId}
-    `
+    `;
 
-    const [customPayOutData]: [any[], FieldPacket[]] = await conn.query(customPayOutSql)
+    const [customPayOutData]: [any[], FieldPacket[]] = await conn.query(customPayOutSql);
     await conn.end();
 
-    return customPayOutData
+    return customPayOutData;
   } catch (e) {
-    consola.error('capsErr:', e)
-    influxdb(500, `get_custom_payout_error`)
+    consola.error('getCustomPayoutPerGeoErr:', e);
+    influxdb(500, 'get_custom_payout_error');
   }
-}
+};
 
+// eslint-disable-next-line consistent-return
 export const getOffer = async (id: number) => {
   try {
     const conn: Pool = await connect();
@@ -280,15 +233,13 @@ export const getOffer = async (id: number) => {
                  left join sfl_offers_cap c
                            ON c.sfl_offer_id = o.id
         WHERE o.id = ${id} and o.deleted_at IS NULL
-    `
-    const [offer]: [any[], FieldPacket[]] = await conn.query(sql)
+    `;
+    const [offer]: [any[], FieldPacket[]] = await conn.query(sql);
     await conn.end();
 
-    return offer.length !== 0 ? offer[0] : []
-
+    return offer.length !== 0 ? offer[0] : [];
   } catch (e) {
-    consola.error(e)
-    influxdb(500, `get_offer_error`)
+    consola.error('getOfferError:', e);
+    influxdb(500, 'get_offer_error');
   }
-}
-
+};
