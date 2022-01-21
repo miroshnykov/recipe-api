@@ -39,7 +39,7 @@ export const sqsProcess = async () => {
     if (!dataQueue?.Messages) {
       return [];
     }
-    const messages:any = [];
+    const messages: any = [];
 
     // await Promise.all(dataQueue.Messages.map(async (message) => {
     //   const messagesUpd: ISqsMessage[] = await recalculateRecipe(message);
