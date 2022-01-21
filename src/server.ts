@@ -83,7 +83,7 @@ app.get('/decodeUrl', async (req: Request, res: Response) => {
 app.get('/files', async (req: Request, res: Response) => {
   try {
     const files = await getLocalFiles('/tmp/co-recipe');
-    const filesFormat:any = [];
+    const filesFormat: any = [];
     await Promise.all(files.map(async (file) => {
       const filePath: string = `/tmp/co-recipe/${file}`;
       const size = await getFileSize(filePath);
@@ -135,7 +135,7 @@ app.get('/capsCampaigns', async (req: Request, res: Response) => {
       return;
     }
 
-    const campaignsFormat:any = [];
+    const campaignsFormat: any = [];
     await Promise.all(campaigns.map(async (campaign) => {
       if (campaign.capsEnabled) {
         const reCalcCampaign = await reCalculateCampaignCaps(campaign.campaignId);

@@ -13,9 +13,9 @@ import { IRedirectReason, IRedirectType } from '../interfaces/recipeTypes';
 // eslint-disable-next-line import/no-cycle
 import { calculateMargin, recalculateChildOffers } from './aggregatedOffer';
 
-export const countriesRestrictions = (offer:IOffer) => {
+export const countriesRestrictions = (offer: IOffer) => {
   const offerClone = { ...offer };
-  let pass:boolean = false;
+  let pass: boolean = false;
   if (offerClone.geoRules) {
     try {
       const geoRules = JSON.parse(offerClone.geoRules);
@@ -38,8 +38,8 @@ export const countriesRestrictions = (offer:IOffer) => {
   };
 };
 
-export const capsOffersRecalculate = async (offer:IOffer) => {
-  let pass:boolean = false;
+export const capsOffersRecalculate = async (offer: IOffer) => {
+  let pass: boolean = false;
   const offerClone = { ...offer };
   if (offerClone.capsEnabled) {
     // eslint-disable-next-line @typescript-eslint/no-use-before-define
@@ -64,8 +64,8 @@ export const capsOffersRecalculate = async (offer:IOffer) => {
   };
 };
 
-export const useStartEndDateCheck = async (offer:IOffer) => {
-  let pass:boolean = false;
+export const useStartEndDateCheck = async (offer: IOffer) => {
+  let pass: boolean = false;
   const offerClone = { ...offer };
   if (offerClone.useStartEndDate) {
     offerClone.startEndDateSetup = true;
@@ -83,8 +83,8 @@ export const useStartEndDateCheck = async (offer:IOffer) => {
   };
 };
 
-export const customPayOutCheck = async (offer:IOffer) => {
-  let pass:boolean = false;
+export const customPayOutCheck = async (offer: IOffer) => {
+  let pass: boolean = false;
   const offerClone = { ...offer };
   if (offerClone.customPayOutCount > 0) {
     const customPayOutData = await getCustomPayoutPerGeo(offerClone.offerId);
@@ -102,7 +102,7 @@ export const reCalculateOffer = async (offer: IOffer) => {
     let offerClone = { ...offer };
     if (offerClone.type === 'aggregated') {
       const offersAggregated = await getAggregatedOffers(offerClone.offerId) || [];
-      const marginOffers:IOffersMargin[] = calculateMargin(offersAggregated);
+      const marginOffers: IOffersMargin[] = calculateMargin(offersAggregated);
       offerClone.offersAggregatedIds = await recalculateChildOffers(marginOffers);
     }
     const countriesRestrictionsRes = countriesRestrictions(offerClone);
