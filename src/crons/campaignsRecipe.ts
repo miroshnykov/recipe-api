@@ -1,7 +1,7 @@
 import JSONStream from 'JSONStream';
 import consola from 'consola';
-import fileSystem from 'fs';
-import os from 'os';
+import fileSystem from 'node:fs';
+import os from 'node:os';
 import { getCampaigns } from '../models/campaignsModel';
 import { reCalculateCampaignCaps } from '../services/campaignsCaps';
 import { compressFile, deleteFile, memorySizeOfBite } from '../utils';

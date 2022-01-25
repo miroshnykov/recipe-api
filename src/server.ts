@@ -1,4 +1,4 @@
-import { createServer } from 'http';
+import { createServer } from 'node:http';
 import { Server, Socket } from 'socket.io';
 import 'dotenv/config';
 import consola from 'consola';

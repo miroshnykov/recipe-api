@@ -1,7 +1,7 @@
-import file, { promises as fs } from 'fs';
+import file, { promises as fs } from 'node:fs';
 import consola from 'consola';
-import zlib from 'zlib';
-import crypto from 'crypto';
+import zlib from 'node:zlib';
+import crypto from 'node:crypto';
 import * as dotenv from 'dotenv';
 
 dotenv.config();
