@@ -17,7 +17,7 @@ const computerName = os.hostname();
 export const setCampaignsRecipe = async () => {
   try {
     const startTime: number = new Date().getTime();
-    consola.info('\nStart create campaigns recipe');
+    consola.info(`\nStart create campaigns recipe  for DB name - { ${process.env.DB_NAME} } DB port - { ${process.env.DB_PORT} }`);
     const campaigns: ICampaign[] | undefined = await getCampaigns();
     if (!campaigns) {
       consola.error('recipe campaigns created errors');

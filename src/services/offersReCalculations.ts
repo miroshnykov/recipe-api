@@ -139,7 +139,7 @@ const exitOffersNested = async (offer: IOffer) => {
   // const limitNested: number = EXIT_OFFERS_NESTED_LIMIT;
   const exitOffersNestedArr: IOffer[] = [];
   const parentOffer: IOffer[] = [];
-  const limitNested = 10
+  const limitNested = 10;
   let count: number = 0;
   // eslint-disable-next-line @typescript-eslint/no-shadow,consistent-return
   const recurseCheckExitOffer = async (offer: IOffer): Promise<any> => {
@@ -154,7 +154,9 @@ const exitOffersNested = async (offer: IOffer) => {
         exitOffersNestedArr.push(tempOffer);
         parentOffer.push(offer);
         const str = count === 1 ? `\nHead offerId:${parentOffer[0].offerId}, name:${parentOffer[0].name} \n` : '';
-        consola.info(`${str} -> nested exit offerId:${tempOffer.offerId}, name:${tempOffer.name} isExitTraffic:${tempOffer?.capInfo?.isExitTraffic} count:${count}, parent offer:${JSON.stringify(parentOffer.map((i) => i.offerId))}`);
+        if (count < 2) {
+          consola.info(`${str} -> nested exit offerId:${tempOffer.offerId}, name:${tempOffer.name} isExitTraffic:${tempOffer?.capInfo?.isExitTraffic} count:${count}, parent offer:${JSON.stringify(parentOffer.map((i) => i.offerId))}`);
+        }
       }
       return recurseCheckExitOffer(tempOffer!);
     }
