@@ -261,5 +261,5 @@ setTimeout(setOffersRecipe, 10000); // 10000 -> 10 sec
 // setInterval(testLinksCampaigns, 25200000) // 25200000 -> 7h
 
 httpServer.listen(port, host, (): void => {
-  consola.success(`server is running on http://${host}:${port} Using node - { ${process.version} } `);
+  consola.success(`server is running on http://${host}:${port} Using node - { ${process.version} } DB name - { ${process.env.DB_NAME} } DB port - { ${process.env.DB_PORT} }`);
 });
