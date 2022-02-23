@@ -139,10 +139,12 @@ const exitOffersNested = async (offer: IOffer) => {
   // const limitNested: number = EXIT_OFFERS_NESTED_LIMIT;
   const exitOffersNestedArr: IOffer[] = [];
   const parentOffer: IOffer[] = [];
+  const limitNested = 10
   let count: number = 0;
   // eslint-disable-next-line @typescript-eslint/no-shadow,consistent-return
   const recurseCheckExitOffer = async (offer: IOffer): Promise<any> => {
     if (offer.offerIdRedirectExitTraffic
+      && count < limitNested
     ) {
       // eslint-disable-next-line @typescript-eslint/no-use-before-define
       const tempOffer = await reCalculateOfferCaps(offer.offerIdRedirectExitTraffic);
