@@ -17,7 +17,7 @@ const computerName = os.hostname();
 export const setOffersRecipe = async () => {
   try {
     const startTime: number = new Date().getTime();
-    consola.info('\nStart create offer recipe');
+    consola.info(`\nStart create offer recipe for DB name - { ${process.env.DB_NAME} } DB port - { ${process.env.DB_PORT} }`);
     const offers: IOffer[] | undefined = await getOffers();
     if (!offers) {
       consola.error('recipe offers created errors');
