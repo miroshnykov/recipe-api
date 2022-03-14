@@ -1,4 +1,4 @@
-import { createServer } from 'http';
+import { createServer } from 'node:http';
 import { Server, Socket } from 'socket.io';
 import 'dotenv/config';
 import consola from 'consola';
@@ -83,7 +83,7 @@ app.get('/decodeUrl', async (req: Request, res: Response) => {
 app.get('/files', async (req: Request, res: Response) => {
   try {
     const files = await getLocalFiles('/tmp/co-recipe');
-    const filesFormat:any = [];
+    const filesFormat: any = [];
     await Promise.all(files.map(async (file) => {
       const filePath: string = `/tmp/co-recipe/${file}`;
       const size = await getFileSize(filePath);
@@ -135,7 +135,7 @@ app.get('/capsCampaigns', async (req: Request, res: Response) => {
       return;
     }
 
-    const campaignsFormat:any = [];
+    const campaignsFormat: any = [];
     await Promise.all(campaigns.map(async (campaign) => {
       if (campaign.capsEnabled) {
         const reCalcCampaign = await reCalculateCampaignCaps(campaign.campaignId);
@@ -261,5 +261,5 @@ setTimeout(setOffersRecipe, 10000); // 10000 -> 10 sec
 // setInterval(testLinksCampaigns, 25200000) // 25200000 -> 7h
 
 httpServer.listen(port, host, (): void => {
-  consola.success(`server is running on http://${host}:${port} Using node - { ${process.version} } `);
+  consola.success(`server is running on http://${host}:${port} Using node - { ${process.version} } DB name - { ${process.env.DB_NAME} } DB port - { ${process.env.DB_PORT} }`);
 });

@@ -1,7 +1,7 @@
 import JSONStream from 'JSONStream';
 import consola from 'consola';
-import fileSystem from 'fs';
-import os from 'os';
+import fileSystem from 'node:fs';
+import os from 'node:os';
 import { getCampaigns } from '../models/campaignsModel';
 import { reCalculateCampaignCaps } from '../services/campaignsCaps';
 import { compressFile, deleteFile, memorySizeOfBite } from '../utils';
@@ -17,7 +17,7 @@ const computerName = os.hostname();
 export const setCampaignsRecipe = async () => {
   try {
     const startTime: number = new Date().getTime();
-    consola.info('\nStart create campaigns recipe');
+    consola.info(`\nStart create campaigns recipe  for DB name - { ${process.env.DB_NAME} } DB port - { ${process.env.DB_PORT} }`);
     const campaigns: ICampaign[] | undefined = await getCampaigns();
     if (!campaigns) {
       consola.error('recipe campaigns created errors');

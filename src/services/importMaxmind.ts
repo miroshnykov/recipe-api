@@ -66,7 +66,7 @@ const insertDBIpAddress = async (record: any) => insertMaxmind(record);
 const processData = async (items: any) => {
   consola.info('start insert records to DB ');
   let count = 0;
-  await Promise.all(items.map(async (item:any) => {
+  await Promise.all(items.map(async (item: any) => {
     const res = await insertDBIpAddress(item);
     if (res) {
       count++;

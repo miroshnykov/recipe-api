@@ -13,9 +13,9 @@ import { IRedirectReason, IRedirectType } from '../interfaces/recipeTypes';
 // eslint-disable-next-line import/no-cycle
 import { calculateMargin, recalculateChildOffers } from './aggregatedOffer';
 
-export const countriesRestrictions = (offer:IOffer) => {
+export const countriesRestrictions = (offer: IOffer) => {
   const offerClone = { ...offer };
-  let pass:boolean = false;
+  let pass: boolean = false;
   if (offerClone.geoRules) {
     try {
       const geoRules = JSON.parse(offerClone.geoRules);
@@ -38,8 +38,8 @@ export const countriesRestrictions = (offer:IOffer) => {
   };
 };
 
-export const capsOffersRecalculate = async (offer:IOffer) => {
-  let pass:boolean = false;
+export const capsOffersRecalculate = async (offer: IOffer) => {
+  let pass: boolean = false;
   const offerClone = { ...offer };
   if (offerClone.capsEnabled) {
     // eslint-disable-next-line @typescript-eslint/no-use-before-define
@@ -64,8 +64,8 @@ export const capsOffersRecalculate = async (offer:IOffer) => {
   };
 };
 
-export const useStartEndDateCheck = async (offer:IOffer) => {
-  let pass:boolean = false;
+export const useStartEndDateCheck = async (offer: IOffer) => {
+  let pass: boolean = false;
   const offerClone = { ...offer };
   if (offerClone.useStartEndDate) {
     offerClone.startEndDateSetup = true;
@@ -83,8 +83,8 @@ export const useStartEndDateCheck = async (offer:IOffer) => {
   };
 };
 
-export const customPayOutCheck = async (offer:IOffer) => {
-  let pass:boolean = false;
+export const customPayOutCheck = async (offer: IOffer) => {
+  let pass: boolean = false;
   const offerClone = { ...offer };
   if (offerClone.customPayOutCount > 0) {
     const customPayOutData = await getCustomPayoutPerGeo(offerClone.offerId);
@@ -102,7 +102,7 @@ export const reCalculateOffer = async (offer: IOffer) => {
     let offerClone = { ...offer };
     if (offerClone.type === 'aggregated') {
       const offersAggregated = await getAggregatedOffers(offerClone.offerId) || [];
-      const marginOffers:IOffersMargin[] = calculateMargin(offersAggregated);
+      const marginOffers: IOffersMargin[] = calculateMargin(offersAggregated);
       offerClone.offersAggregatedIds = await recalculateChildOffers(marginOffers);
     }
     const countriesRestrictionsRes = countriesRestrictions(offerClone);
@@ -139,10 +139,12 @@ const exitOffersNested = async (offer: IOffer) => {
   // const limitNested: number = EXIT_OFFERS_NESTED_LIMIT;
   const exitOffersNestedArr: IOffer[] = [];
   const parentOffer: IOffer[] = [];
+  const limitNested = 10;
   let count: number = 0;
   // eslint-disable-next-line @typescript-eslint/no-shadow,consistent-return
   const recurseCheckExitOffer = async (offer: IOffer): Promise<any> => {
     if (offer.offerIdRedirectExitTraffic
+      && count < limitNested
     ) {
       // eslint-disable-next-line @typescript-eslint/no-use-before-define
       const tempOffer = await reCalculateOfferCaps(offer.offerIdRedirectExitTraffic);
@@ -152,7 +154,9 @@ const exitOffersNested = async (offer: IOffer) => {
         exitOffersNestedArr.push(tempOffer);
         parentOffer.push(offer);
         const str = count === 1 ? `\nHead offerId:${parentOffer[0].offerId}, name:${parentOffer[0].name} \n` : '';
-        consola.info(`${str} -> nested exit offerId:${tempOffer.offerId}, name:${tempOffer.name} isExitTraffic:${tempOffer?.capInfo?.isExitTraffic} count:${count}, parent offer:${JSON.stringify(parentOffer.map((i) => i.offerId))}`);
+        if (count < 2) {
+          consola.info(`${str} -> nested exit offerId:${tempOffer.offerId}, name:${tempOffer.name} isExitTraffic:${tempOffer?.capInfo?.isExitTraffic} count:${count}, parent offer:${JSON.stringify(parentOffer.map((i) => i.offerId))}`);
+        }
       }
       return recurseCheckExitOffer(tempOffer!);
     }

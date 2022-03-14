@@ -1,12 +1,12 @@
-> Recipe server generator
+### Recipe server generator
 
-## Generate recipe
+### Generate recipe
 
     Every minutes we generated zip files with offers & campaigns
     send those files to s3 folder co-recipe-prod
     set to local redis size of files
 
-## Sockets
+### Sockets
 
     for sync size of recipes (offers&campaigns)
     co-traffic send size of recipes every 20 second, co-recipe check origin size with co-traffic.
@@ -18,55 +18,60 @@
     if the record offer or campaign was added | updated | deleted, project co-admin-back send sqs message with offerId or campaignId to co-recipe.
     Co-recipe handle this record and send by socket to co-traffic with new data
 
-## Docker setup
+### Docker setup
 
 	docker build -t co-recipe .
 	docker run -it -p 3001:3001 --rm --name co-recipe-  co-recipe
 
-## run
-
+### run
     create folder /tmp/co-recipe on local env
     npm run dev
 
-## build
-
+### build
     npm run build
-## enpoints
+
+### check size of recipe
     https://recipe.aezai.com/fileSizeInfoRedis
     https://recipe-slave.aezai.com/fileSizeInfoRedis
 
-## env example
+### env example
+```dotenv
+HOST=localhost
+PORT=3001
+ENV=development
+DB_HOST=127.0.0.1
+DB_PORT=3007
+DB_USERNAME=
+DB_PASSWORD=
+DB_NAME=traffic
 
-    HOST=localhost
-    PORT=3001
-    ENV=development
-    DB_HOST=127.0.0.1
-    DB_PORT=3007
-    DB_USERNAME=
-    DB_PASSWORD=
-    DB_NAME=traffic
+AWS_ACCESS_KEY_ID=
+AWS_SECRET_ACCESS_KEY=
+AWS_REGION=us-east-1
 
-    AWS_ACCESS_KEY_ID=
-    AWS_SECRET_ACCESS_KEY=
-    AWS_REGION=us-east-1
+OFFERS_RECIPE_PATH=/tmp/co-recipe/offersRecipe.json
+CAMPAIGNS_RECIPE_PATH=/tmp/co-recipe/campaignsRecipe.json
 
-    OFFERS_RECIPE_PATH=/tmp/co-recipe/offersRecipe.json
-    CAMPAIGNS_RECIPE_PATH=/tmp/co-recipe/campaignsRecipe.json
+S3_CAMPAIGNS_RECIPE_PATH=campaignsRecipe.json.gz
+S3_OFFERS_RECIPE_PATH=offersRecipe.json.gz
+S3_BUCKET_NAME=co-recipe-staging
 
-    S3_CAMPAIGNS_RECIPE_PATH=campaignsRecipe.json.gz
-    S3_OFFERS_RECIPE_PATH=offersRecipe.json.gz
-    S3_BUCKET_NAME=co-recipe-staging
+AWS_SQS_QUEUE_URL=
 
-    AWS_SQS_QUEUE_URL=
+ENCRIPTION_KEY=
+ENCRIPTION_IV_LENGTH=
+```
 
-    ENCRIPTION_KEY=
-    ENCRIPTION_IV_LENGTH=
-
-## docker build
+### docker build
 
 	docker build -t co-recipe .
 	docker run -it -p 3001:3001 --rm --name co-recipe-  co-recipe
 
-# diagram
+### nodeJs v16
+### New in Node.js: node: protocol imports
 
+    import * as fs from 'node:fs';
+    https://nodejs.org/api/esm.html#node-imports
+
+### diagram
 ![](diagram-co-traffic.png)

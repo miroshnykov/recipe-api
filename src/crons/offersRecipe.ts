@@ -1,7 +1,7 @@
 import JSONStream from 'JSONStream';
 import consola from 'consola';
-import fileSystem from 'fs';
-import os from 'os';
+import fileSystem from 'node:fs';
+import os from 'node:os';
 import { compressFile, deleteFile, memorySizeOfBite } from '../utils';
 import { getOffers } from '../models/offersModel';
 import { reCalculateOffer } from '../services/offersReCalculations';
@@ -17,7 +17,7 @@ const computerName = os.hostname();
 export const setOffersRecipe = async () => {
   try {
     const startTime: number = new Date().getTime();
-    consola.info('\nStart create offer recipe');
+    consola.info(`\nStart create offer recipe for DB name - { ${process.env.DB_NAME} } DB port - { ${process.env.DB_PORT} }`);
     const offers: IOffer[] | undefined = await getOffers();
     if (!offers) {
       consola.error('recipe offers created errors');
