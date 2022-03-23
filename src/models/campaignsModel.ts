@@ -45,6 +45,7 @@ export const getCampaign = async (id: number) => {
                c.affiliate_id         AS affiliateId,
                c.payout               AS payout,
                c.payout_percent       AS payoutPercent,
+               a.status               AS affiliateStatus,
                a.affiliate_manager_id AS affiliateManagerId,
                cap.enabled            AS capsEnabled
         FROM sfl_offer_campaigns c
