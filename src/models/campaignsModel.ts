@@ -14,6 +14,7 @@ export const getCampaigns = async () => {
                c.sfl_offer_id             AS offerId,
                c.affiliate_id             AS affiliateId,
                a.status                   AS affiliateStatus,
+               c.status                   AS campaignStatus,
                c.payout                   AS payout,
                c.payout_percent           AS payoutPercent,
                a.affiliate_manager_id     AS affiliateManagerId,
@@ -21,7 +22,7 @@ export const getCampaigns = async () => {
         FROM sfl_offer_campaigns c
                  LEFT JOIN sfl_affiliates a ON a.id = c.affiliate_id
                  LEFT JOIN sfl_offer_campaign_cap cap ON cap.sfl_offer_campaign_id = c.id AND cap.enabled = true
-        WHERE c.status = 'active'
+        WHERE c.status in ('active','inactive','pending','blocked')
 --          and c.id in (998960, 49)
     `;
     const [campaigns]: [any[], FieldPacket[]] = await conn.query(sql);
@@ -46,6 +47,7 @@ export const getCampaign = async (id: number) => {
                c.payout               AS payout,
                c.payout_percent       AS payoutPercent,
                a.status               AS affiliateStatus,
+               c.status               AS campaignStatus,
                a.affiliate_manager_id AS affiliateManagerId,
                cap.enabled            AS capsEnabled
         FROM sfl_offer_campaigns c
