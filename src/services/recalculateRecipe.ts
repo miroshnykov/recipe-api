@@ -15,10 +15,9 @@ const offerUpdateOrCreate = async (messageBody: ISqsMessage): Promise<ISqsMessag
   const projectName = messageBody?.project || '';
   const messageResponse = [];
   switch (offer.status) {
-    case IOfferStatus.INACTIVE:
     case IOfferStatus.DRAFT: {
       const generateOfferBodyForDelete: ISqsMessage = {
-        comments: 'offer status inactive or draft, lets delete from recipe',
+        comments: 'offer status draft, lets delete from recipe',
         type: ISqsMessageType.OFFER,
         id: messageBody.id,
         project: messageBody.project || '',
@@ -34,6 +33,7 @@ const offerUpdateOrCreate = async (messageBody: ISqsMessage): Promise<ISqsMessag
     case IOfferStatus.PUBLIC:
     case IOfferStatus.PENDING:
     case IOfferStatus.APPLY_TO_RUN:
+    case IOfferStatus.INACTIVE:
     case IOfferStatus.PRIVATE: {
       const reCalculatedOffer: IOffer | any = await reCalculateOffer(offer);
       const generateOfferBody: ISqsMessage = {
