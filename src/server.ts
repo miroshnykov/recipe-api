@@ -6,6 +6,8 @@ import consola from 'consola';
 import express, {
   Application, Request, Response,
 } from 'express';
+import axios from 'axios';
+import md5 from 'md5';
 import { setOffersRecipe } from './crons/offersRecipe';
 import { redis } from './redis';
 import { setCampaignsRecipe } from './crons/campaignsRecipe';
@@ -53,6 +55,27 @@ app.get('/encodeUrl', async (req: Request, res: Response) => {
       encryptData,
     };
     res.json(response);
+  } catch (e) {
+    consola.error(e);
+    res.json({ err: e });
+  }
+});
+
+// http://localhost:3001/bonusLid
+app.get('/bonusLid', async (req: Request, res: Response) => {
+  try {
+    const timestamp = Date.now();
+    const secret = process.env.GATEWAY_API_SECRET;
+    const hash = md5(`${timestamp}|${secret}`);
+
+    const params = {
+      lid: 'f19ef205-f19f-4a94-9947-adf4620b12d9',
+      hash,
+      timestamp,
+    };
+    // const { data } = await axios.post('https://traffic.aezai.com/lid', params);
+    const { data } = await axios.post('http://localhost:5000/lid', params);
+    res.json(data);
   } catch (e) {
     consola.error(e);
     res.json({ err: e });
