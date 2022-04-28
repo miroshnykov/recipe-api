@@ -16,7 +16,7 @@ import {
 } from './utils';
 import { sqsProcess } from './sqs';
 
-import { influxdb } from './metrics';
+import { influxdb, sendMetricsSystem } from './metrics';
 import { ICampaign } from './interfaces/campaigns';
 import { getCampaigns } from './models/campaignsModel';
 import { reCalculateCampaignCaps } from './services/campaignsCaps';
@@ -279,6 +279,11 @@ setInterval(setOffersRecipe, 312000); // 312000 -> 5.2 min
 
 setTimeout(setCampaignsRecipe, 20000); // 20000 -> 6 sec
 setTimeout(setOffersRecipe, 10000); // 10000 -> 10 sec
+
+setInterval(() => {
+  // if (process.env.NODE_ENV === 'development') return;
+  sendMetricsSystem();
+}, 30000);
 
 // setInterval(testLinksOffers, 28800000) // 28800000 -> 8h
 // setInterval(testLinksCampaigns, 25200000) // 25200000 -> 7h
