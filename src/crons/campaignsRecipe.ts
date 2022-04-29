@@ -38,19 +38,19 @@ export const setCampaignsRecipe = async () => {
     const endTime: number = new Date().getTime();
     const speedTime: number = endTime - startTime;
 
-    consola.info(`Recalculate { campaigns } done speedTime: { ${speedTime}ms }`);
+    consola.info(`Recalculate { campaigns } done speedTime: { ${speedTime}ms }  for DB name - { ${process.env.DB_NAME} } `);
     const sizeOfCampaignsDB: number = memorySizeOfBite(campaignsFormat);
     // consola.info(`Identify Size of Campaigns from DB Object:${sizeOfCampaignsDB} count: { ${campaignsFormat.length} }`)
     influxdb(200, `generate_recipe_campaigns_${computerName}`);
 
     const sizeOfCampaignsRedis: number = await getFileSize(IRecipeType.CAMPAIGNS);
-    consola.info(`Identify Size of { Campaigns } Redis: { ${sizeOfCampaignsRedis} } DB: { ${sizeOfCampaignsDB} } count: { ${campaignsFormat.length} }`);
+    consola.info(`Identify Size of { Campaigns } Redis: { ${sizeOfCampaignsRedis} } DB: { ${sizeOfCampaignsDB} } count: { ${campaignsFormat.length} }  for DB name - { ${process.env.DB_NAME} }`);
 
     if (sizeOfCampaignsDB === sizeOfCampaignsRedis) {
-      consola.info(`Size of { Campaigns } in Redis the same like in DB :${sizeOfCampaignsDB}, don't need create recipe`);
+      consola.info(`Size of { Campaigns } in Redis the same like in DB :${sizeOfCampaignsDB}, don't need create recipe  for DB name - { ${process.env.DB_NAME} } `);
       return;
     }
-    consola.info(`Size of { Campaigns } from Redis and DB is different, lets create the recipe, sizeOfCampaignsDB:${sizeOfCampaignsDB}, sizeOfCampaignsRedis:${sizeOfCampaignsRedis}`);
+    consola.info(`Size of { Campaigns } from Redis and DB is different, lets create the recipe, sizeOfCampaignsDB:${sizeOfCampaignsDB}, sizeOfCampaignsRedis:${sizeOfCampaignsRedis}  for DB name - { ${process.env.DB_NAME} } `);
     const filePath: string = process.env.CAMPAIGNS_RECIPE_PATH || '';
 
     const transformStream = JSONStream.stringify();
@@ -68,7 +68,7 @@ export const setCampaignsRecipe = async () => {
         await compressFile(filePath!);
         await deleteFile(filePath!);
         influxdb(200, `recipe_campaigns_created_${computerName}`);
-        consola.success(`File Campaigns (count:${campaigns?.length}) created path:${filePath} `);
+        consola.success(`File Campaigns (count:${campaigns?.length}) created path:${filePath}  for DB name - { ${process.env.DB_NAME} }  `);
       },
     );
     // setTimeout(uploadFileToS3Bucket, 6000, IRecipeType.CAMPAIGNS) // 6000 -> 6 sec
