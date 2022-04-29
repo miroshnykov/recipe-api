@@ -275,9 +275,9 @@ io.on('connect', async (socket: Socket) => {
 });
 
 setInterval(setCampaignsRecipe, 300000); // 300000 -> 5 min
-setInterval(setOffersRecipe, 312000); // 312000 -> 5.2 min
+setInterval(setOffersRecipe, 420000); // 420000 -> 7 min
 
-setTimeout(setCampaignsRecipe, 20000); // 20000 -> 6 sec
+setTimeout(setCampaignsRecipe, 30000); // 30000 -> 30 sec
 setTimeout(setOffersRecipe, 10000); // 10000 -> 10 sec
 
 setInterval(() => {

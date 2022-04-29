@@ -153,10 +153,10 @@ const exitOffersNested = async (offer: IOffer) => {
 
         exitOffersNestedArr.push(tempOffer);
         parentOffer.push(offer);
-        const str = count === 1 ? `\nHead offerId:${parentOffer[0].offerId}, name:${parentOffer[0].name} \n` : '';
-        if (count < 2) {
-          consola.info(`${str} -> nested exit offerId:${tempOffer.offerId}, name:${tempOffer.name} isExitTraffic:${tempOffer?.capInfo?.isExitTraffic} count:${count}, parent offer:${JSON.stringify(parentOffer.map((i) => i.offerId))}`);
-        }
+        // const str = count === 1 ? `\nHead offerId:${parentOffer[0].offerId}, name:${parentOffer[0].name} \n` : '';
+        // if (count < 2) {
+        //  consola.info(`${str} -> nested exit offerId:${tempOffer.offerId}, name:${tempOffer.name} isExitTraffic:${tempOffer?.capInfo?.isExitTraffic} count:${count}, parent offer:${JSON.stringify(parentOffer.map((i) => i.offerId))}`);
+        // }
       }
       return recurseCheckExitOffer(tempOffer!);
     }
@@ -173,7 +173,7 @@ const exitOfferDetecting = (offers: IOffer[]) => {
     if (exitTrafficFilter.length !== 0) {
       [exitTrafficFilterResult] = exitTrafficFilter;
     }
-    consola.info(` --> exitOfferDetecting offerId:${exitTrafficFilterResult.offerId}, name:${exitTrafficFilterResult.name} isExitTraffic:${exitTrafficFilterResult.capInfo?.isExitTraffic}`);
+    // consola.info(` --> exitOfferDetecting offerId:${exitTrafficFilterResult.offerId}, name:${exitTrafficFilterResult.name} isExitTraffic:${exitTrafficFilterResult.capInfo?.isExitTraffic}`);
   }
   return exitTrafficFilterResult;
 };
