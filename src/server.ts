@@ -281,7 +281,7 @@ setTimeout(setCampaignsRecipe, 20000); // 20000 -> 6 sec
 setTimeout(setOffersRecipe, 10000); // 10000 -> 10 sec
 
 setInterval(() => {
-  // if (process.env.NODE_ENV === 'development') return;
+  if (process.env.NODE_ENV === 'development') return;
   sendMetricsSystem();
 }, 30000);
 
