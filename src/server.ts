@@ -212,6 +212,7 @@ io.on('connection', (socket: Socket) => {
       const fileSizeOffersRecipe: number = Number(await redis.get('offersSizeRecipe'));
 
       if (!fileSizeOffersRecipe) {
+        influxdb(500, 'file_size_redis_empty_offers');
         consola.info(`fileSizeOffersRecipe:${fileSizeOffersRecipe} not set up yet, dont need to send to co-traffic empty size`);
         return;
       }
@@ -230,6 +231,7 @@ io.on('connection', (socket: Socket) => {
     try {
       const fileSizeCampaignsRecipe: number = Number(await redis.get('campaignsSizeRecipe'));
       if (!fileSizeCampaignsRecipe) {
+        influxdb(500, 'file_size_redis_empty_campaign');
         consola.info(`fileSizeCampaignsRecipe:${fileSizeCampaignsRecipe} not set up yet, dont need to send to co-traffic empty size `);
         return;
       }
