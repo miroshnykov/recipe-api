@@ -44,19 +44,19 @@ export const setOffersRecipe = async () => {
 
     const endTime: number = new Date().getTime();
     const speedTime: number = endTime - startTime;
-    consola.info(`Recalculate { offers } done speedTime: { ${speedTime}ms }`);
+    consola.info(`Recalculate { offers } done speedTime: { ${speedTime}ms } for DB name - { ${process.env.DB_NAME} } `);
     const sizeOfOffersDB: number = memorySizeOfBite(offerFormat);
     // consola.info(`Identify Size of Offers Object:${sizeOfOffersDB} count: { ${offerFormat.length} }`)
     influxdb(200, `generate_recipe_offers_${computerName}`);
 
     const sizeOfOffersRedis: number = await getFileSize(IRecipeType.OFFERS);
-    consola.info(`Identify Size of { Offers } Redis: { ${sizeOfOffersRedis} } DB { ${sizeOfOffersDB} } count: { ${offerFormat.length} }`);
+    consola.info(`Identify Size of { Offers } Redis: { ${sizeOfOffersRedis} } DB { ${sizeOfOffersDB} } count: { ${offerFormat.length} }  for DB name - { ${process.env.DB_NAME} } `);
 
     if (sizeOfOffersDB === sizeOfOffersRedis) {
-      consola.info(`Size of { Offers } in Redis the same like in DB :${sizeOfOffersDB}, don't need create recipe`);
+      consola.info(`Size of { Offers } in Redis the same like in DB :${sizeOfOffersDB}, don't need create recipe  for DB name - { ${process.env.DB_NAME} } `);
       return;
     }
-    consola.info(`Size of { Offers } from Redis and DB is different, lets create the recipe, sizeOfOffersDB:${sizeOfOffersDB}, sizeOfOffersRedis:${sizeOfOffersRedis}`);
+    consola.info(`Size of { Offers } from Redis and DB is different, lets create the recipe, sizeOfOffersDB:${sizeOfOffersDB}, sizeOfOffersRedis:${sizeOfOffersRedis}  for DB name - { ${process.env.DB_NAME} } `);
 
     const filePath: string = process.env.OFFERS_RECIPE_PATH || '';
 
@@ -75,7 +75,7 @@ export const setOffersRecipe = async () => {
         await compressFile(filePath!);
         await deleteFile(filePath!);
         influxdb(200, `recipe_offers_created_${computerName}`);
-        consola.success(`File Offers(count:${offerFormat?.length}) created path:${filePath} `);
+        consola.success(`File Offers(count:${offerFormat?.length}) created path:${filePath}  for DB name - { ${process.env.DB_NAME} } `);
       },
     );
     // setTimeout(uploadFileToS3Bucket, 6000, IRecipeType.OFFERS)
