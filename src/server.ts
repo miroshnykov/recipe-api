@@ -213,11 +213,11 @@ io.on('connection', (socket: Socket) => {
 
       if (!fileSizeOffersRecipe) {
         influxdb(500, 'file_size_redis_empty_offers');
-        consola.info(`fileSizeOffersRecipe:${fileSizeOffersRecipe} not set up yet, dont need to send to co-traffic empty size`);
+        consola.info(`fileSizeOffersRecipe:${fileSizeOffersRecipe} not set up yet, dont need to send to co-traffic empty size for DB name - { ${process.env.DB_NAME} } `);
         return;
       }
       if (fileSizeOffersCheck !== fileSizeOffersRecipe) {
-        consola.warn(`fileSize offer is different, fileSizeOffersCoTraffic:${fileSizeOffersCheck}, fileSizeOffersRecipe:${fileSizeOffersRecipe} `);
+        consola.warn(`fileSize offer is different, fileSizeOffersCoTraffic:${fileSizeOffersCheck}, fileSizeOffersRecipe:${fileSizeOffersRecipe}  for DB name - { ${process.env.DB_NAME} }  `);
         influxdb(200, 'file_size_changed_offers');
         io.to(socket.id).emit('fileSizeOffersCheck', fileSizeOffersRecipe);
       }
@@ -232,12 +232,12 @@ io.on('connection', (socket: Socket) => {
       const fileSizeCampaignsRecipe: number = Number(await redis.get('campaignsSizeRecipe'));
       if (!fileSizeCampaignsRecipe) {
         influxdb(500, 'file_size_redis_empty_campaign');
-        consola.info(`fileSizeCampaignsRecipe:${fileSizeCampaignsRecipe} not set up yet, dont need to send to co-traffic empty size `);
+        consola.info(`fileSizeCampaignsRecipe:${fileSizeCampaignsRecipe} not set up yet, dont need to send to co-traffic empty size  for DB name - { ${process.env.DB_NAME} } `);
         return;
       }
 
       if (fileSizeCampaignsCheck !== fileSizeCampaignsRecipe) {
-        consola.warn(`fileSize campaigns is different, fileSizeCampaignsCoTraffic:${fileSizeCampaignsCheck}, fileSizeCampaignsRecipe:${fileSizeCampaignsRecipe} `);
+        consola.warn(`fileSize campaigns is different, fileSizeCampaignsCoTraffic:${fileSizeCampaignsCheck}, fileSizeCampaignsRecipe:${fileSizeCampaignsRecipe}  for DB name - { ${process.env.DB_NAME} } `);
         influxdb(200, 'file_size_changed_campaigns');
         io.to(socket.id).emit('fileSizeCampaignsCheck', fileSizeCampaignsRecipe);
       }
