@@ -17,7 +17,7 @@ const computerName = os.hostname();
 export const setCampaignsRecipe = async () => {
   try {
     const startTime: number = new Date().getTime();
-    consola.info(`\nStart create campaigns recipe  for DB name - { ${process.env.DB_NAME} } DB port - { ${process.env.DB_PORT} }`);
+    consola.info(`Start create { campaigns } recipe  for DB name - { ${process.env.DB_NAME} } DB port - { ${process.env.DB_PORT} }`);
     const campaigns: ICampaign[] | undefined = await getCampaigns();
     if (!campaigns) {
       consola.error('recipe campaigns created errors');
@@ -38,19 +38,19 @@ export const setCampaignsRecipe = async () => {
     const endTime: number = new Date().getTime();
     const speedTime: number = endTime - startTime;
 
-    consola.info(`Recalculate campaigns done speedTime: { ${speedTime}ms }`);
+    consola.info(`Recalculate { campaigns } done speedTime: { ${speedTime}ms }`);
     const sizeOfCampaignsDB: number = memorySizeOfBite(campaignsFormat);
     // consola.info(`Identify Size of Campaigns from DB Object:${sizeOfCampaignsDB} count: { ${campaignsFormat.length} }`)
     influxdb(200, `generate_recipe_campaigns_${computerName}`);
 
     const sizeOfCampaignsRedis: number = await getFileSize(IRecipeType.CAMPAIGNS);
-    consola.info(`Identify Size of Campaigns Redis: { ${sizeOfCampaignsRedis} } DB: { ${sizeOfCampaignsDB} } count: { ${campaignsFormat.length} }`);
+    consola.info(`Identify Size of { Campaigns } Redis: { ${sizeOfCampaignsRedis} } DB: { ${sizeOfCampaignsDB} } count: { ${campaignsFormat.length} }`);
 
     if (sizeOfCampaignsDB === sizeOfCampaignsRedis) {
-      consola.info(`Size of Campaigns in Redis the same like in DB :${sizeOfCampaignsDB}, don't need create recipe`);
+      consola.info(`Size of { Campaigns } in Redis the same like in DB :${sizeOfCampaignsDB}, don't need create recipe`);
       return;
     }
-    consola.info(`Size of Campaigns from Redis and DB is different, lets create the recipe, sizeOfCampaignsDB:${sizeOfCampaignsDB}, sizeOfCampaignsRedis:${sizeOfCampaignsRedis}`);
+    consola.info(`Size of { Campaigns } from Redis and DB is different, lets create the recipe, sizeOfCampaignsDB:${sizeOfCampaignsDB}, sizeOfCampaignsRedis:${sizeOfCampaignsRedis}`);
     const filePath: string = process.env.CAMPAIGNS_RECIPE_PATH || '';
 
     const transformStream = JSONStream.stringify();

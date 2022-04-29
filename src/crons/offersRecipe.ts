@@ -17,7 +17,7 @@ const computerName = os.hostname();
 export const setOffersRecipe = async () => {
   try {
     const startTime: number = new Date().getTime();
-    consola.info(`\nStart create offer recipe for DB name - { ${process.env.DB_NAME} } DB port - { ${process.env.DB_PORT} }`);
+    consola.info(`Start create { offers } recipe for DB name - { ${process.env.DB_NAME} } DB port - { ${process.env.DB_PORT} }`);
     const offers: IOffer[] | undefined = await getOffers();
     if (!offers) {
       consola.error('recipe offers created errors');
@@ -44,19 +44,19 @@ export const setOffersRecipe = async () => {
 
     const endTime: number = new Date().getTime();
     const speedTime: number = endTime - startTime;
-    consola.info(`Recalculate offers done speedTime: { ${speedTime}ms }`);
+    consola.info(`Recalculate { offers } done speedTime: { ${speedTime}ms }`);
     const sizeOfOffersDB: number = memorySizeOfBite(offerFormat);
     // consola.info(`Identify Size of Offers Object:${sizeOfOffersDB} count: { ${offerFormat.length} }`)
     influxdb(200, `generate_recipe_offers_${computerName}`);
 
     const sizeOfOffersRedis: number = await getFileSize(IRecipeType.OFFERS);
-    consola.info(`Identify Size of Offers Redis: { ${sizeOfOffersRedis} } DB { ${sizeOfOffersDB} } count: { ${offerFormat.length} }`);
+    consola.info(`Identify Size of { Offers } Redis: { ${sizeOfOffersRedis} } DB { ${sizeOfOffersDB} } count: { ${offerFormat.length} }`);
 
     if (sizeOfOffersDB === sizeOfOffersRedis) {
-      consola.info(`Size of Offers in Redis the same like in DB :${sizeOfOffersDB}, don't need create recipe`);
+      consola.info(`Size of { Offers } in Redis the same like in DB :${sizeOfOffersDB}, don't need create recipe`);
       return;
     }
-    consola.info(`Size of Offers from Redis and DB is different, lets create the recipe, sizeOfOffersDB:${sizeOfOffersDB}, sizeOfOffersRedis:${sizeOfOffersRedis}`);
+    consola.info(`Size of { Offers } from Redis and DB is different, lets create the recipe, sizeOfOffersDB:${sizeOfOffersDB}, sizeOfOffersRedis:${sizeOfOffersRedis}`);
 
     const filePath: string = process.env.OFFERS_RECIPE_PATH || '';
 
