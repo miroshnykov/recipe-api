@@ -32,7 +32,7 @@ consola.info(`Grafana project name:${project} hostname:${hostname}`);
 export const influxdb = (statusCode: number, route: string) => {
   const params: IParam = {
     code: statusCode,
-    route,
+    route: `${route}_${process.env.APP_MODEL}`,
     method: 'GET',
   };
 
@@ -94,7 +94,7 @@ export const sendMetricsSystem = () => {
     clientInfluxdb.write(`${project}_system`)
       .tag({
         project,
-        host: hostname,
+        host: `${hostname}_${process.env.APP_MODEL}`,
       })
       .field(fields)
       .time(Date.now(), 'ms')
