@@ -43,12 +43,12 @@ export const uploadFileToS3Bucket = async (type: IRecipeType): Promise<boolean |
       Body: fileData,
     };
     const uploadResponse = await s3.upload(params).promise().catch((e) => {
-      consola.error(`fileS3UploadBucketError:${s3Key} s3BucketName:${s3BucketName}`, e);
+      consola.error(`fileS3UploadBucketError:${s3Key} s3BucketName:${s3BucketName} for DB name - { ${process.env.DB_NAME} }`, e);
       influxdb(500, `recipe_${type}_uploaded_to_s3_error`);
     });
     if (uploadResponse) {
       influxdb(200, `recipe_${type}_uploaded_to_s3`);
-      consola.info(`File ${type} uploaded successfully at ${uploadResponse.Location}`);
+      consola.info(`File ${type} uploaded successfully at ${uploadResponse.Location} for DB name - { ${process.env.DB_NAME} } `);
       return true;
     }
   } catch (error) {
