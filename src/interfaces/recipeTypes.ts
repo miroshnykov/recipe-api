@@ -3,6 +3,11 @@ export enum IRecipeType {
   OFFERS = 'offers',
 }
 
+export enum AppModel {
+  MASTER = 'master',
+  SLAVE = 'slave',
+}
+
 export enum IRedirectType {
   CAPS_OFFERS_CLICKS_OVER_LIMIT = 'capsOffersClicksOverLimit',
   CAPS_OFFERS_SALES_OVER_LIMIT = 'capsOffersSalesOverLimit',
