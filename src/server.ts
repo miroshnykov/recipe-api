@@ -25,6 +25,7 @@ import { ISqsMessage } from './interfaces/sqsMessage';
 import { testLinksCampaigns, testLinksOffers } from './tests/links';
 import { IOffer } from './interfaces/offers';
 import { getOffer } from './models/offersModel';
+import { AppModel } from './interfaces/recipeTypes';
 
 const app: Application = express();
 const httpServer = createServer(app);
@@ -276,8 +277,13 @@ io.on('connect', async (socket: Socket) => {
   consola.success('connect id', socket.id);
 });
 
-setInterval(setCampaignsRecipe, 300000); // 300000 -> 5 min
-setInterval(setOffersRecipe, 420000); // 420000 -> 7 min
+// for campaigns master time = (300000 -> 5 min)  for slave time = (360000 -> 6 min)
+const intervalTimeCampaign = process.env.APP_MODEL === AppModel.MASTER ? 300000 : 360000;
+setInterval(setCampaignsRecipe, intervalTimeCampaign);
+
+// for offers master time = (420000 -> 7 min)  for slave time = (480000 -> 8 min)
+const intervalTimeOffer = process.env.APP_MODEL === AppModel.MASTER ? 420000 : 480000;
+setInterval(setOffersRecipe, intervalTimeOffer);
 
 setTimeout(setCampaignsRecipe, 30000); // 30000 -> 30 sec
 setTimeout(setOffersRecipe, 10000); // 10000 -> 10 sec
