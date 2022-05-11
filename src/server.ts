@@ -252,11 +252,11 @@ io.on('connection', (socket: Socket) => {
   const sendUpdRecipe = async (): Promise<void> => {
     try {
       const messages: ISqsMessage[] = await sqsProcess();
-
       if (messages.length === 0) return;
+      consola.log(`Got { ${messages.length} } messages from sqs from sfl_worker or admin-api`);
       for (const message of messages) {
         // consola.info(`send to socket ${socket.id}, message:${JSON.stringify(message)}`)
-        consola.info(`send to socket ${socket.id}, ${message.type}ID:${message.id}, action:${message.action}, project:${message.project}, comments:${message.comments} `);
+        // consola.info(`send to socket ${socket.id}, ${message.type}ID:${message.id}, action:${message.action}, project:${message.project}, comments:${message.comments}, APP_MODEL:${process.env.APP_MODEL}`);
         io.sockets.emit('updRecipe', message);
       }
     } catch (e) {
@@ -264,8 +264,9 @@ io.on('connection', (socket: Socket) => {
       consola.error('updRecipeError:', e);
     }
   };
-
-  updRedis[socket.id] = setInterval(sendUpdRecipe, 30000); // 30 sec
+  if (process.env.APP_MODEL === AppModel.MASTER) {
+    updRedis[socket.id] = setInterval(sendUpdRecipe, 30000); // 30 sec
+  }
 
   socket.on('disconnect', () => {
     clearInterval(updRedis[socket.id]);
