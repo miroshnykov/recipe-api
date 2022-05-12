@@ -253,7 +253,7 @@ io.on('connection', (socket: Socket) => {
     try {
       const messages: ISqsMessage[] = await sqsProcess();
       if (messages.length === 0) return;
-      consola.log(`Got { ${messages.length} } messages from sqs from sfl_worker or admin-api`);
+      // consola.log(`Got { ${messages.length} } messages from sqs from sfl_worker or admin-api`);
       for (const message of messages) {
         // consola.info(`send to socket ${socket.id}, message:${JSON.stringify(message)}`)
         // consola.info(`send to socket ${socket.id}, ${message.type}ID:${message.id}, action:${message.action}, project:${message.project}, comments:${message.comments}, APP_MODEL:${process.env.APP_MODEL}`);
