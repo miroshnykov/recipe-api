@@ -14,6 +14,13 @@ import { getFileSize } from './getFileSize';
 
 const computerName = os.hostname();
 
+const uploadS3SetSize = async (sizeOfCampaignsDB: number) => {
+  const response: boolean | undefined = await uploadFileToS3Bucket(IRecipeType.CAMPAIGNS);
+  if (response) {
+    setTimeout(setFileSize, 10000, IRecipeType.CAMPAIGNS, sizeOfCampaignsDB);
+  }
+};
+
 export const setCampaignsRecipe = async () => {
   try {
     const startTime: number = new Date().getTime();
@@ -69,21 +76,18 @@ export const setCampaignsRecipe = async () => {
         await deleteFile(filePath!);
         influxdb(200, `recipe_campaigns_created_${computerName}`);
         consola.success(`File Campaigns (count:${campaigns?.length}) created path:${filePath}  for DB name - { ${process.env.DB_NAME} }  `);
+        setTimeout(uploadS3SetSize, 2000, sizeOfCampaignsDB);
       },
     );
+
+    outputStream.on('error', (err: any) => {
+      consola.error('Campaign qz file recipe creating got error:', err);
+      influxdb(500, `recipe_campaigns_create_qz_error_${computerName}`);
+    });
     // setTimeout(uploadFileToS3Bucket, 6000, IRecipeType.CAMPAIGNS) // 6000 -> 6 sec
     // setTimeout(setFileSize, 20000, IRecipeType.CAMPAIGNS, sizeOfCampaignsDB)  // 20000 -> 20 sec
-    // eslint-disable-next-line @typescript-eslint/no-use-before-define
-    setTimeout(uploadS3SetSize, 6000, sizeOfCampaignsDB);
   } catch (e) {
     influxdb(500, `recipe_campaigns_create_error_${computerName}`);
     consola.error('create campaign recipe Error:', e);
-  }
-};
-
-const uploadS3SetSize = async (sizeOfCampaignsDB: number) => {
-  const response: boolean | undefined = await uploadFileToS3Bucket(IRecipeType.CAMPAIGNS);
-  if (response) {
-    setTimeout(setFileSize, 10000, IRecipeType.CAMPAIGNS, sizeOfCampaignsDB);
   }
 };
