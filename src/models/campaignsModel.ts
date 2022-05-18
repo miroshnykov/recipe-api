@@ -14,6 +14,7 @@ export const getCampaigns = async () => {
                c.sfl_offer_id             AS offerId,
                c.affiliate_id             AS affiliateId,
                a.status                   AS affiliateStatus,
+               a.affiliate_type           AS affiliateType,
                c.status                   AS campaignStatus,
                c.payout                   AS payout,
                c.payout_percent           AS payoutPercent,
