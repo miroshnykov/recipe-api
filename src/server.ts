@@ -6,6 +6,8 @@ import consola from 'consola';
 import express, {
   Application, Request, Response,
 } from 'express';
+import axios from 'axios';
+import md5 from 'md5';
 import { setOffersRecipe } from './crons/offersRecipe';
 import { redis } from './redis';
 import { setCampaignsRecipe } from './crons/campaignsRecipe';
@@ -14,7 +16,7 @@ import {
 } from './utils';
 import { sqsProcess } from './sqs';
 
-import { influxdb } from './metrics';
+import { influxdb, sendMetricsSystem } from './metrics';
 import { ICampaign } from './interfaces/campaigns';
 import { getCampaigns } from './models/campaignsModel';
 import { reCalculateCampaignCaps } from './services/campaignsCaps';
@@ -23,6 +25,7 @@ import { ISqsMessage } from './interfaces/sqsMessage';
 import { testLinksCampaigns, testLinksOffers } from './tests/links';
 import { IOffer } from './interfaces/offers';
 import { getOffer } from './models/offersModel';
+import { AppModel } from './interfaces/recipeTypes';
 
 const app: Application = express();
 const httpServer = createServer(app);
@@ -53,6 +56,27 @@ app.get('/encodeUrl', async (req: Request, res: Response) => {
       encryptData,
     };
     res.json(response);
+  } catch (e) {
+    consola.error(e);
+    res.json({ err: e });
+  }
+});
+
+// http://localhost:3001/bonusLid
+app.get('/bonusLid', async (req: Request, res: Response) => {
+  try {
+    const timestamp = Date.now();
+    const secret = process.env.GATEWAY_API_SECRET;
+    const hash = md5(`${timestamp}|${secret}`);
+
+    const params = {
+      lid: 'f19ef205-f19f-4a94-9947-adf4620b12d9',
+      hash,
+      timestamp,
+    };
+    // const { data } = await axios.post('https://traffic.aezai.com/lid', params);
+    const { data } = await axios.post('http://localhost:5000/lid', params);
+    res.json(data);
   } catch (e) {
     consola.error(e);
     res.json({ err: e });
@@ -189,11 +213,12 @@ io.on('connection', (socket: Socket) => {
       const fileSizeOffersRecipe: number = Number(await redis.get('offersSizeRecipe'));
 
       if (!fileSizeOffersRecipe) {
-        consola.info(`fileSizeOffersRecipe:${fileSizeOffersRecipe} not set up yet, dont need to send to co-traffic empty size`);
+        influxdb(500, 'file_size_redis_empty_offers');
+        consola.info(`fileSizeOffersRecipe:${fileSizeOffersRecipe} not set up yet, dont need to send to co-traffic empty size for DB name - { ${process.env.DB_NAME} } `);
         return;
       }
       if (fileSizeOffersCheck !== fileSizeOffersRecipe) {
-        consola.warn(`fileSize offer is different, fileSizeOffersCoTraffic:${fileSizeOffersCheck}, fileSizeOffersRecipe:${fileSizeOffersRecipe} `);
+        consola.warn(`fileSize offer is different, fileSizeOffersCoTraffic:${fileSizeOffersCheck}, fileSizeOffersRecipe:${fileSizeOffersRecipe}  for DB name - { ${process.env.DB_NAME} }  `);
         influxdb(200, 'file_size_changed_offers');
         io.to(socket.id).emit('fileSizeOffersCheck', fileSizeOffersRecipe);
       }
@@ -207,12 +232,13 @@ io.on('connection', (socket: Socket) => {
     try {
       const fileSizeCampaignsRecipe: number = Number(await redis.get('campaignsSizeRecipe'));
       if (!fileSizeCampaignsRecipe) {
-        consola.info(`fileSizeCampaignsRecipe:${fileSizeCampaignsRecipe} not set up yet, dont need to send to co-traffic empty size `);
+        influxdb(500, 'file_size_redis_empty_campaign');
+        consola.info(`fileSizeCampaignsRecipe:${fileSizeCampaignsRecipe} not set up yet, dont need to send to co-traffic empty size  for DB name - { ${process.env.DB_NAME} } `);
         return;
       }
 
       if (fileSizeCampaignsCheck !== fileSizeCampaignsRecipe) {
-        consola.warn(`fileSize campaigns is different, fileSizeCampaignsCoTraffic:${fileSizeCampaignsCheck}, fileSizeCampaignsRecipe:${fileSizeCampaignsRecipe} `);
+        consola.warn(`fileSize campaigns is different, fileSizeCampaignsCoTraffic:${fileSizeCampaignsCheck}, fileSizeCampaignsRecipe:${fileSizeCampaignsRecipe}  for DB name - { ${process.env.DB_NAME} } `);
         influxdb(200, 'file_size_changed_campaigns');
         io.to(socket.id).emit('fileSizeCampaignsCheck', fileSizeCampaignsRecipe);
       }
@@ -226,11 +252,11 @@ io.on('connection', (socket: Socket) => {
   const sendUpdRecipe = async (): Promise<void> => {
     try {
       const messages: ISqsMessage[] = await sqsProcess();
-
       if (messages.length === 0) return;
+      // consola.log(`Got { ${messages.length} } messages from sqs from sfl_worker or admin-api`);
       for (const message of messages) {
         // consola.info(`send to socket ${socket.id}, message:${JSON.stringify(message)}`)
-        consola.info(`send to socket ${socket.id}, ${message.type}ID:${message.id}, action:${message.action}, project:${message.project}, comments:${message.comments} `);
+        // consola.info(`send to socket ${socket.id}, ${message.type}ID:${message.id}, action:${message.action}, project:${message.project}, comments:${message.comments}, APP_MODEL:${process.env.APP_MODEL}`);
         io.sockets.emit('updRecipe', message);
       }
     } catch (e) {
@@ -238,8 +264,9 @@ io.on('connection', (socket: Socket) => {
       consola.error('updRecipeError:', e);
     }
   };
-
-  updRedis[socket.id] = setInterval(sendUpdRecipe, 30000); // 30 sec
+  if (process.env.APP_MODEL === AppModel.MASTER) {
+    updRedis[socket.id] = setInterval(sendUpdRecipe, 30000); // 30 sec
+  }
 
   socket.on('disconnect', () => {
     clearInterval(updRedis[socket.id]);
@@ -251,11 +278,21 @@ io.on('connect', async (socket: Socket) => {
   consola.success('connect id', socket.id);
 });
 
-setInterval(setCampaignsRecipe, 300000); // 300000 -> 5 min
-setInterval(setOffersRecipe, 312000); // 312000 -> 5.2 min
+// for campaigns master time = (300000 -> 5 min)  for slave time = (360000 -> 6 min)
+const intervalTimeCampaign = process.env.APP_MODEL === AppModel.MASTER ? 300000 : 360000;
+setInterval(setCampaignsRecipe, intervalTimeCampaign);
 
-setTimeout(setCampaignsRecipe, 20000); // 20000 -> 6 sec
+// for offers master time = (420000 -> 7 min)  for slave time = (480000 -> 8 min)
+const intervalTimeOffer = process.env.APP_MODEL === AppModel.MASTER ? 420000 : 480000;
+setInterval(setOffersRecipe, intervalTimeOffer);
+
+setTimeout(setCampaignsRecipe, 30000); // 30000 -> 30 sec
 setTimeout(setOffersRecipe, 10000); // 10000 -> 10 sec
+
+setInterval(() => {
+  if (process.env.NODE_ENV === 'development') return;
+  sendMetricsSystem();
+}, 30000);
 
 // setInterval(testLinksOffers, 28800000) // 28800000 -> 8h
 // setInterval(testLinksCampaigns, 25200000) // 25200000 -> 7h

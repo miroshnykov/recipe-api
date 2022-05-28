@@ -14,10 +14,17 @@ import { getFileSize } from './getFileSize';
 
 const computerName = os.hostname();
 
+const uploadS3SetSize = async (sizeOfOffersDB: number) => {
+  const response: boolean | undefined = await uploadFileToS3Bucket(IRecipeType.OFFERS);
+  if (response) {
+    setTimeout(setFileSize, 10000, IRecipeType.OFFERS, sizeOfOffersDB);
+  }
+};
+
 export const setOffersRecipe = async () => {
   try {
     const startTime: number = new Date().getTime();
-    consola.info(`\nStart create offer recipe for DB name - { ${process.env.DB_NAME} } DB port - { ${process.env.DB_PORT} }`);
+    consola.info(`Start create { offers } recipe for DB name - { ${process.env.DB_NAME} } DB port - { ${process.env.DB_PORT} }`);
     const offers: IOffer[] | undefined = await getOffers();
     if (!offers) {
       consola.error('recipe offers created errors');
@@ -44,19 +51,19 @@ export const setOffersRecipe = async () => {
 
     const endTime: number = new Date().getTime();
     const speedTime: number = endTime - startTime;
-    consola.info(`Recalculate offers done speedTime: { ${speedTime}ms }`);
+    consola.info(`Recalculate { offers } done speedTime: { ${speedTime}ms } for DB name - { ${process.env.DB_NAME} } `);
     const sizeOfOffersDB: number = memorySizeOfBite(offerFormat);
     // consola.info(`Identify Size of Offers Object:${sizeOfOffersDB} count: { ${offerFormat.length} }`)
     influxdb(200, `generate_recipe_offers_${computerName}`);
 
     const sizeOfOffersRedis: number = await getFileSize(IRecipeType.OFFERS);
-    consola.info(`Identify Size of Offers Redis: { ${sizeOfOffersRedis} } DB { ${sizeOfOffersDB} } count: { ${offerFormat.length} }`);
+    consola.info(`Identify Size of { Offers } Redis: { ${sizeOfOffersRedis} } DB { ${sizeOfOffersDB} } count: { ${offerFormat.length} }  for DB name - { ${process.env.DB_NAME} } `);
 
     if (sizeOfOffersDB === sizeOfOffersRedis) {
-      consola.info(`Size of Offers in Redis the same like in DB :${sizeOfOffersDB}, don't need create recipe`);
+      consola.info(`Size of { Offers } in Redis the same like in DB :${sizeOfOffersDB}, don't need create recipe  for DB name - { ${process.env.DB_NAME} } `);
       return;
     }
-    consola.info(`Size of Offers from Redis and DB is different, lets create the recipe, sizeOfOffersDB:${sizeOfOffersDB}, sizeOfOffersRedis:${sizeOfOffersRedis}`);
+    consola.info(`Size of { Offers } from Redis and DB is different, lets create the recipe, sizeOfOffersDB:${sizeOfOffersDB}, sizeOfOffersRedis:${sizeOfOffersRedis}  for DB name - { ${process.env.DB_NAME} } `);
 
     const filePath: string = process.env.OFFERS_RECIPE_PATH || '';
 
@@ -75,22 +82,20 @@ export const setOffersRecipe = async () => {
         await compressFile(filePath!);
         await deleteFile(filePath!);
         influxdb(200, `recipe_offers_created_${computerName}`);
-        consola.success(`File Offers(count:${offerFormat?.length}) created path:${filePath} `);
+        consola.success(`File Offers(count:${offerFormat?.length}) created path:${filePath}  for DB name - { ${process.env.DB_NAME} } `);
+        setTimeout(uploadS3SetSize, 6000, sizeOfOffersDB);
       },
     );
+
+    outputStream.on('error', (err: any) => {
+      consola.error('Offer qz file recipe creating got error:', err);
+      influxdb(500, `recipe_offers_create_qz_error_${computerName}`);
+    });
+    // setTimeout(uploadS3SetSize, 6000, sizeOfOffersDB);
     // setTimeout(uploadFileToS3Bucket, 6000, IRecipeType.OFFERS)
     // setTimeout(setFileSize, 10000, IRecipeType.OFFERS, sizeOfOffersDB)
-    // eslint-disable-next-line @typescript-eslint/no-use-before-define
-    setTimeout(uploadS3SetSize, 6000, sizeOfOffersDB);
   } catch (e) {
     influxdb(500, `recipe_offers_create_error_${computerName}`);
     consola.error('create offers recipe Error:', e);
-  }
-};
-
-const uploadS3SetSize = async (sizeOfOffersDB: number) => {
-  const response: boolean | undefined = await uploadFileToS3Bucket(IRecipeType.OFFERS);
-  if (response) {
-    setTimeout(setFileSize, 10000, IRecipeType.OFFERS, sizeOfOffersDB);
   }
 };

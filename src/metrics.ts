@@ -4,6 +4,11 @@ import consola from 'consola';
 import * as dotenv from 'dotenv';
 import * as _ from 'lodash';
 
+import cpu from 'cpu';
+
+// eslint-disable-next-line @typescript-eslint/naming-convention
+const num_cpu = cpu.num();
+
 dotenv.config();
 const host = process.env.GRAFANA_HOST;
 const clientInfluxdb = new Influx(host);
@@ -23,11 +28,11 @@ interface IParam {
   method: string
 }
 
-consola.info(`Grafana project name:${project}`);
+consola.info(`Grafana project name:${project} hostname:${hostname}`);
 export const influxdb = (statusCode: number, route: string) => {
   const params: IParam = {
     code: statusCode,
-    route,
+    route: `${route}_${process.env.APP_MODEL}`,
     method: 'GET',
   };
 
@@ -50,4 +55,52 @@ export const influxdb = (statusCode: number, route: string) => {
         consola.error(error);
       });
   }
+};
+
+export const sendMetricsSystem = () => {
+  const loads = os.loadavg();
+  const memoryUsage = process.memoryUsage();
+  const totalmem = os.totalmem();
+  const freemem = os.freemem();
+  // eslint-disable-next-line @typescript-eslint/naming-convention
+  const memory_usage_perc = Number((100 - (freemem / totalmem) * 100).toFixed(2));
+  // eslint-disable-next-line @typescript-eslint/naming-convention
+  const memory_usage_bytes = totalmem - freemem;
+  const fields = {
+    loadavg_1m: loads[0], // 1-minute load averages.
+    loadavg_5m: loads[1], // 5-minute load averages.
+    loadavg_15m: loads[2], // 15-minute load averages.
+    uptime: os.uptime(), // Uptime
+    heap_total: memoryUsage.heapTotal, // heapTotal and heapUsed refer to V8's memory usage.
+    heap_used: memoryUsage.heapUsed, // heapTotal and heapUsed refer to V8's memory usage.
+    rss: memoryUsage.rss, // Resident Set Size, is the amount of space occupied in the main memory device (that is a subset of the total allocated memory) for the process, which includes the heap, code segment and stack
+    external: memoryUsage.external, // External refers to the memory usage of C++ objects bound to JavaScript objects managed by V8
+    totalmem, // Total OS memory
+    freemem, // Free OS memory
+    mem_os_usage: memory_usage_perc, // Memory usage %
+    memory_usage_bytes, // Memory usage bytes
+    cpu_avg_perc: 0,
+  };
+  // eslint-disable-next-line @typescript-eslint/no-shadow
+  cpu.usage((cpu: any) => {
+    // eslint-disable-next-line @typescript-eslint/naming-convention
+    let load_cpu = 0;
+    cpu.forEach((item: any) => {
+      load_cpu += Number(item);
+    });
+    // @ts-ignore
+    fields.cpu_avg_perc = load_cpu / num_cpu;
+    // consola.success(`Send to Grafana, hostname: ${hostname} sendMetricsSystem data:${JSON.stringify(fields)}`);
+    clientInfluxdb.write(`${project}_system`)
+      .tag({
+        project,
+        host: `${hostname}_${process.env.APP_MODEL}`,
+      })
+      .field(fields)
+      .time(Date.now(), 'ms')
+      .then(() => {})
+      .catch((error: any) => {
+        consola.error(error);
+      });
+  });
 };
