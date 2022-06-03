@@ -23,8 +23,9 @@ export const calculateMargin = (offersAggregated: IOffersMargin[]) => offersAggr
 
 export const recalculateChildOffers = async (marginOffers: IOffersMargin[]) => {
   const marginOffersResponse: any = [];
-  for await (const offer of marginOffers) {
+  for (const offer of marginOffers) {
     const offerClone = { ...offer };
+    // eslint-disable-next-line no-await-in-loop
     const offerData: IOffer = await getOffer(offerClone.aggregatedOfferId);
 
     const countriesRestrictionsRes = countriesRestrictions(offerData);
@@ -32,12 +33,14 @@ export const recalculateChildOffers = async (marginOffers: IOffersMargin[]) => {
       offerClone.countriesRestrictions = countriesRestrictionsRes?.offer?.countriesRestrictions;
     }
 
+    // eslint-disable-next-line no-await-in-loop
     const capsOffersRecalculateRes = await capsOffersRecalculate(offerData);
     if (capsOffersRecalculateRes.success) {
       offerClone.capsOverLimitSales = capsOffersRecalculateRes?.offer?.capInfo?.capsSalesOverLimit!;
       offerClone.capsOverLimitClicks = capsOffersRecalculateRes?.offer?.capInfo?.capsClicksOverLimit!;
     }
 
+    // eslint-disable-next-line no-await-in-loop
     const useStartEndDateCheckRes = await useStartEndDateCheck(offerData);
     if (useStartEndDateCheckRes.success) {
       offerClone.dateRangeNotPass = useStartEndDateCheckRes?.offer?.startEndDateSetting?.dateRangePass;

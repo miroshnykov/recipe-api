@@ -33,8 +33,9 @@ export const setCampaignsRecipe = async () => {
     }
     // const promises = [];
     const campaignsFormat: ICampaign[] = [];
-    for await (const campaign of campaigns) {
+    for (const campaign of campaigns) {
       if (campaign.capsEnabled) {
+        // eslint-disable-next-line no-await-in-loop
         const reCalcCampaign: ICampaign = <ICampaign> await reCalculateCampaignCaps(campaign.campaignId);
         campaignsFormat.push(reCalcCampaign);
       } else {
