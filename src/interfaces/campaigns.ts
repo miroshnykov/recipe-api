@@ -5,6 +5,7 @@ export interface ICampaign {
   name: string
   offerId: number
   affiliateId: number
+  affiliateType: string
   campaignStatus: string
   capsEnabled: boolean | null
   capSetup: boolean

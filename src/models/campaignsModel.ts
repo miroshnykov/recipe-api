@@ -50,6 +50,7 @@ export const getCampaign = async (id: number) => {
                a.status               AS affiliateStatus,
                c.status               AS campaignStatus,
                a.affiliate_manager_id AS affiliateManagerId,
+               a.affiliate_type       AS affiliateType,
                cap.enabled            AS capsEnabled
         FROM sfl_offer_campaigns c
                  LEFT JOIN sfl_affiliates a ON a.id = c.affiliate_id
