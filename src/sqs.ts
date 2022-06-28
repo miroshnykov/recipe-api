@@ -47,7 +47,8 @@ export const sqsProcess = async () => {
     //     messages.push(messageUpd);
     //   }
     // }));
-    for await (const message of dataQueue.Messages) {
+    for (const message of dataQueue.Messages) {
+      // eslint-disable-next-line no-await-in-loop
       const messagesUpd: ISqsMessage[] = await recalculateRecipe(message);
       for (const messageUpd of messagesUpd) {
         messages.push(messageUpd);
