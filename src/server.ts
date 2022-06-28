@@ -206,6 +206,18 @@ app.get('/reCalculateOffer', async (req: Request, res: Response) => {
   }
 });
 
+app.get('/reCalculateAffiliates', async (req: Request, res: Response) => {
+  try {
+    setTimeout(setAffiliatesRecipe, 2000);
+
+    res.json({
+      response: 'setAffiliatesRecipe to sqs',
+    });
+  } catch (e) {
+    res.json({ err: e });
+  }
+});
+
 io.on('connection', (socket: Socket) => {
   consola.success('connection');
   socket.on('fileSizeOffersCheck', async (fileSizeOffersCheck: number) => {
