@@ -26,6 +26,7 @@ import { testLinksCampaigns, testLinksOffers } from './tests/links';
 import { IOffer } from './interfaces/offers';
 import { getOffer } from './models/offersModel';
 import { AppModel } from './interfaces/recipeTypes';
+import { setAffiliatesRecipe } from './crons/affiliatesRecipe';
 
 const app: Application = express();
 const httpServer = createServer(app);
@@ -285,6 +286,11 @@ setInterval(setCampaignsRecipe, intervalTimeCampaign);
 // for offers master time = (420000 -> 7 min)  for slave time = (480000 -> 8 min)
 const intervalTimeOffer = process.env.APP_MODEL === AppModel.MASTER ? 420000 : 480000;
 setInterval(setOffersRecipe, intervalTimeOffer);
+
+if (process.env.APP_MODEL === AppModel.MASTER) {
+  setInterval(setAffiliatesRecipe, 300000); //  300000 -> 5 min
+  setTimeout(setAffiliatesRecipe, 40000); // 40000 -> 40 sec
+}
 
 setTimeout(setCampaignsRecipe, 30000); // 30000 -> 30 sec
 setTimeout(setOffersRecipe, 10000); // 10000 -> 10 sec

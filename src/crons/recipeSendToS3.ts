@@ -32,6 +32,11 @@ export const uploadFileToS3Bucket = async (type: IRecipeType): Promise<boolean |
         s3Key = process.env.S3_CAMPAIGNS_RECIPE_PATH || '';
         s3BucketName = process.env.S3_BUCKET_NAME || '';
         break;
+      case IRecipeType.AFFILIATES:
+        tempFileName = `${process.env.AFFILIATES_RECIPE_PATH}.gz` || '';
+        s3Key = process.env.S3_AFFILIATES_RECIPE_PATH || '';
+        s3BucketName = process.env.S3_BUCKET_NAME || '';
+        break;
       default:
         throw Error(`${type} not define, not able to get file from s3 `);
     }

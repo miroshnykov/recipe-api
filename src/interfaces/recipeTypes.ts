@@ -1,6 +1,7 @@
 export enum IRecipeType {
   CAMPAIGNS = 'campaigns',
   OFFERS = 'offers',
+  AFFILIATES = 'affiliates',
 }
 
 export enum AppModel {
