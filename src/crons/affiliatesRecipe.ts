@@ -50,11 +50,11 @@ export const copyS3ToRedshift = async (destPath: string): Promise<boolean> => {
   try {
     await client.query(queryCopy);
     // consola.info(`File ${destPath} added to redshift successfully`);
-    influxdb(200, `copy_file_s3_to_redshift_success_${computerName}`);
+    influxdb(200, `copy_file_s3_affiliates_to_redshift_success_${computerName}`);
     client.release();
     return true;
   } catch (e) {
-    influxdb(500, `copy_file_s3_to_redshift_error_${computerName}`);
+    influxdb(500, `copy_file_s3_affiliates_to_redshift_error_${computerName}`);
     consola.error('copyS3ToRedshiftError:', e);
     return false;
   }
