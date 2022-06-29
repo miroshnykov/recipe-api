@@ -17,14 +17,7 @@ import {
 import { sqsProcess } from './sqs';
 
 import { influxdb, sendMetricsSystem } from './metrics';
-import { ICampaign } from './interfaces/campaigns';
-import { getCampaigns } from './models/campaignsModel';
-import { reCalculateCampaignCaps } from './services/campaignsCaps';
-import { reCalculateOffer, reCalculateOfferCaps } from './services/offersReCalculations';
 import { ISqsMessage } from './interfaces/sqsMessage';
-import { testLinksCampaigns, testLinksOffers } from './tests/links';
-import { IOffer } from './interfaces/offers';
-import { getOffer } from './models/offersModel';
 import { AppModel } from './interfaces/recipeTypes';
 import { setAffiliatesRecipe } from './crons/affiliatesRecipe';
 
@@ -42,6 +35,9 @@ app.get('/api/v1/health', (req: Request, res: Response) => {
 // http://localhost:3001/encodeUrl?offerId=1111&campaignId=22222
 app.get('/encodeUrl', async (req: Request, res: Response) => {
   try {
+    if (!req.query.hash || req.query.hash !== process.env.GATEWAY_API_SECRET) {
+      throw Error('broken key');
+    }
     const campaignId: number = Number(req.query.campaignId);
     const offerId = Number(req.query.offerId);
 
@@ -57,9 +53,12 @@ app.get('/encodeUrl', async (req: Request, res: Response) => {
       encryptData,
     };
     res.json(response);
-  } catch (e) {
+  } catch (e: any) {
     consola.error(e);
-    res.json({ err: e });
+    res.json({
+      success: false,
+      info: e.toString(),
+    });
   }
 });
 
@@ -84,29 +83,33 @@ app.get('/bonusLid', async (req: Request, res: Response) => {
   }
 });
 
-// http://localhost:3001/decodeUrl?code=
-app.get('/decodeUrl', async (req: Request, res: Response) => {
-  interface DecodedObj {
-    offerId: number
-    campaignId: number
-  }
-
-  try {
-    const code: string = String(req.query.code);
-    const decodedString: string = decrypt(code);
-    const formatCode: DecodedObj = JSON.parse(decodedString!);
-
-    res.json(formatCode);
-  } catch (e) {
-    consola.error(e);
-    res.json({ err: e });
-  }
-});
+// // http://localhost:3001/decodeUrl?code=
+// app.get('/decodeUrl', async (req: Request, res: Response) => {
+//   interface DecodedObj {
+//     offerId: number
+//     campaignId: number
+//   }
+//
+//   try {
+//     const code: string = String(req.query.code);
+//     const decodedString: string = decrypt(code);
+//     const formatCode: DecodedObj = JSON.parse(decodedString!);
+//
+//     res.json(formatCode);
+//   } catch (e) {
+//     consola.error(e);
+//     res.json({ err: e });
+//   }
+// });
 
 // http://localhost:3001/files
 // https://co-recipe.jatun.systems/files
 app.get('/files', async (req: Request, res: Response) => {
   try {
+    if (!req.query.hash || req.query.hash !== process.env.GATEWAY_API_SECRET) {
+      throw Error('broken key');
+    }
+
     const files = await getLocalFiles('/tmp/co-recipe');
     const filesFormat: any = [];
     await Promise.all(files.map(async (file) => {
@@ -121,11 +124,14 @@ app.get('/files', async (req: Request, res: Response) => {
   }
 });
 
-// http://localhost:3001/fileSizeInfoRedis
+// http://localhost:3001/fileSizeInfoRedis?hash=
 // https://co-recipe.jatun.systems/fileSizeInfoRedis
 // https://recipe.aezai.com/fileSizeInfoRedis
 app.get('/fileSizeInfoRedis', async (req: Request, res: Response) => {
   try {
+    if (!req.query.hash || req.query.hash !== process.env.GATEWAY_API_SECRET) {
+      throw Error('broken key');
+    }
     const fileSizeCampaignsRecipe: number = Number(await redis.get('campaignsSizeRecipe')) || 0;
     const fileSizeOffersRecipe: number = Number(await redis.get('offersSizeRecipe')) || 0;
 
@@ -133,88 +139,100 @@ app.get('/fileSizeInfoRedis', async (req: Request, res: Response) => {
       fileSizeCampaignsRecipe,
       fileSizeOffersRecipe,
     });
-  } catch (e) {
-    res.json({ err: e });
-  }
-});
-
-app.get('/caps', async (req: Request, res: Response) => {
-  try {
-    // let offers:IOffer[] = await getOffers()||[]
-    const caps = await reCalculateOfferCaps(36818);
-    // let caps = await reCalculateOfferCaps(35899)
-    // let offer = await getOffer(19)
+  } catch (e: any) {
     res.json({
-      caps,
+      success: false,
+      info: e.toString(),
     });
-  } catch (e) {
-    res.json({ err: e });
   }
 });
 
-app.get('/capsCampaigns', async (req: Request, res: Response) => {
-  try {
-    const campaigns: ICampaign[] | undefined = await getCampaigns();
-    if (!campaigns) {
-      consola.error('recipe_campaigns_created_error');
-      return;
-    }
+// app.get('/caps', async (req: Request, res: Response) => {
+//   try {
+//     // let offers:IOffer[] = await getOffers()||[]
+//     const caps = await reCalculateOfferCaps(36818);
+//     // let caps = await reCalculateOfferCaps(35899)
+//     // let offer = await getOffer(19)
+//     res.json({
+//       caps,
+//     });
+//   } catch (e) {
+//     res.json({ err: e });
+//   }
+// });
 
-    const campaignsFormat: any = [];
-    await Promise.all(campaigns.map(async (campaign) => {
-      if (campaign.capsEnabled) {
-        const reCalcCampaign = await reCalculateCampaignCaps(campaign.campaignId);
-        campaignsFormat.push(reCalcCampaign);
-      } else {
-        campaignsFormat.push(campaign);
-      }
-    }));
-
-    res.json({
-      campaignsFormat,
-    });
-  } catch (e) {
-    res.json({ err: e });
-  }
-});
+// app.get('/capsCampaigns', async (req: Request, res: Response) => {
+//   try {
+//     const campaigns: ICampaign[] | undefined = await getCampaigns();
+//     if (!campaigns) {
+//       consola.error('recipe_campaigns_created_error');
+//       return;
+//     }
+//
+//     const campaignsFormat: any = [];
+//     await Promise.all(campaigns.map(async (campaign) => {
+//       if (campaign.capsEnabled) {
+//         const reCalcCampaign = await reCalculateCampaignCaps(campaign.campaignId);
+//         campaignsFormat.push(reCalcCampaign);
+//       } else {
+//         campaignsFormat.push(campaign);
+//       }
+//     }));
+//
+//     res.json({
+//       campaignsFormat,
+//     });
+//   } catch (e) {
+//     res.json({ err: e });
+//   }
+// });
 
 // https://recipe.aezai.com/link
-app.get('/link', async (req: Request, res: Response) => {
-  try {
-    setTimeout(testLinksOffers, 10000); // 10000 -> 10s
-    setTimeout(testLinksCampaigns, 20000); // 20000 -> 20s
-    res.json('added to queue testLinksOffers  testLinksCampaigns');
-  } catch (e) {
-    res.json({ err: e });
-  }
-});
+// app.get('/link', async (req: Request, res: Response) => {
+//   try {
+//     setTimeout(testLinksOffers, 10000); // 10000 -> 10s
+//     setTimeout(testLinksCampaigns, 20000); // 20000 -> 20s
+//     res.json('added to queue testLinksOffers  testLinksCampaigns');
+//   } catch (e) {
+//     res.json({ err: e });
+//   }
+// });
 
-app.get('/reCalculateOffer', async (req: Request, res: Response) => {
-  try {
-    // reqular 36816
-    // aggregated  36817
-    // caps  36815
-    const offerId = 36817;
-    const offer: IOffer = await getOffer(offerId);
-    const reCalcOfferRes = await reCalculateOffer(offer);
+// app.get('/reCalculateOffer', async (req: Request, res: Response) => {
+//   try {
+//     // reqular 36816
+//     // aggregated  36817
+//     // caps  36815
+//     const offerId = 36817;
+//     const offer: IOffer = await getOffer(offerId);
+//     const reCalcOfferRes = await reCalculateOffer(offer);
+//
+//     res.json({
+//       reCalcOfferRes,
+//     });
+//   } catch (e) {
+//     res.json({ err: e });
+//   }
+// });
 
-    res.json({
-      reCalcOfferRes,
-    });
-  } catch (e) {
-    res.json({ err: e });
-  }
-});
-
+// http://localhost:3001/reCalculateAffiliates?hash=
+// https://recipe.aezai.com/reCalculateAffiliates
+// https://recipe.stage.aezai.com/reCalculateAffiliates
 app.get('/reCalculateAffiliates', async (req: Request, res: Response) => {
   try {
+    if (!req.query.hash || req.query.hash !== process.env.GATEWAY_API_SECRET) {
+      throw Error('broken key');
+    }
     setTimeout(setAffiliatesRecipe, 2000);
 
     res.json({
       response: 'setAffiliatesRecipe to sqs',
     });
-  } catch (e) {
-    res.json({ err: e });
+  } catch (e: any) {
+    res.json({
+      success: false,
+      info: e.toString(),
+    });
   }
 });
 
