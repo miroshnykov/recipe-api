@@ -302,10 +302,12 @@ io.on('connection', (socket: Socket) => {
   socket.on('disconnect', () => {
     clearInterval(updRedis[socket.id]);
     consola.warn(`client disconnected ID:${socket.id}`);
+    influxdb(500, `disconnect_traffic_api_${process.env.APP_MODEL}`);
   });
 });
 
 io.on('connect', async (socket: Socket) => {
+  influxdb(200, `connect_traffic_api_${process.env.APP_MODEL}`);
   consola.success('connect id', socket.id);
 });
 
@@ -331,6 +333,7 @@ setInterval(() => {
   sendMetricsSystem();
 }, 30000);
 
+// consola.warn('process.env:', process.env);
 // setInterval(testLinksOffers, 28800000) // 28800000 -> 8h
 // setInterval(testLinksCampaigns, 25200000) // 25200000 -> 7h
 
