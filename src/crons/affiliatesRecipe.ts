@@ -31,8 +31,11 @@ export const deleteAffiliates = async (): Promise<boolean> => {
     await client.query(query);
     client.release();
     consola.info(`all records from table  ${process.env.REDSHIFT_SCHEMA}.affiliates was deleted`);
+    influxdb(200, 'delete_redshift_affiliates');
     return true;
-  } catch (e) {
+  } catch (e: any) {
+    consola.error('deleteAffiliatesError:', e.toString());
+    influxdb(500, 'delete_redshift_affiliates_error');
     return false;
   }
 };
