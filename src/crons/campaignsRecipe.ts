@@ -50,7 +50,7 @@ export const setCampaignsRecipe = async () => {
     if (rangeSpeed(speedTime) > 120000) {
       influxdb(500, `generate_recipe_campaigns_speed_${rangeSpeed(speedTime)}_${computerName}`);
     }
-    consola.info(`[CAMPAIGNS] Recalculate { campaigns } done speedTime: { ${speedTime}ms }  { ${millisToMinutesAndSeconds(speedTime)} time } for DB name - { ${process.env.DB_NAME} } `);
+    consola.info(`[CAMPAIGNS] Recalculate campaigns speedTime: { ${speedTime}ms }  { ${millisToMinutesAndSeconds(speedTime)} time } for DB name - { ${process.env.DB_NAME} } `);
     const sizeOfCampaignsDB: number = memorySizeOfBite(campaignsFormat);
     // consola.info(`Identify Size of Campaigns from DB Object:${sizeOfCampaignsDB} count: { ${campaignsFormat.length} }`)
     influxdb(200, `generate_recipe_campaigns_${computerName}`);

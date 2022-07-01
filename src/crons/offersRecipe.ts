@@ -57,7 +57,7 @@ export const setOffersRecipe = async () => {
     if (rangeSpeed(speedTime) > 180000) {
       influxdb(500, `generate_recipe_offers_speed_${rangeSpeed(speedTime)}_${computerName}`);
     }
-    consola.info(`[OFFERS] Recalculate { offers } done speedTime: { ${speedTime}ms } { ${millisToMinutesAndSeconds(speedTime)} time }  for DB name - { ${process.env.DB_NAME} } `);
+    consola.info(`[OFFERS] Recalculate offers speedTime: { ${speedTime}ms } { ${millisToMinutesAndSeconds(speedTime)} time }  for DB name - { ${process.env.DB_NAME} } `);
     const sizeOfOffersDB: number = memorySizeOfBite(offerFormat);
     // consola.info(`Identify Size of Offers Object:${sizeOfOffersDB} count: { ${offerFormat.length} }`)
     influxdb(200, `generate_recipe_offers_${computerName}`);
