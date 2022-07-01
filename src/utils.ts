@@ -125,3 +125,27 @@ export const memorySizeOfBite = <T extends object>(obj: T): number => {
 
   return sizeOf(obj);
 };
+
+export const millisToMinutesAndSeconds = (ms: number) => {
+  const minutes = Math.floor(ms / 60000);
+  const seconds = ((ms % 60000) / 1000).toFixed(0);
+  // @ts-ignore
+  return `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+};
+
+export const rangeSpeed = (ms: number): number => {
+  switch (true) {
+    case ms < 20000:
+      return 20000;
+    case ms > 20000 && ms < 60000:
+      return 60000; // 1m
+    case ms > 60001 && ms < 120000:
+      return 120000; // 2m
+    case ms > 120001 && ms < 180000:
+      return 180000; // 3m
+    case ms > 180001 && ms < 300000:
+      return 300000; // 5m
+    default:
+      return 300000;
+  }
+};

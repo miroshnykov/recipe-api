@@ -1,7 +1,9 @@
 import consola from 'consola';
 import fileSystem from 'node:fs';
 import os from 'node:os';
-import { compressFile, deleteFile, memorySizeOfBite } from '../utils';
+import {
+  compressFile, deleteFile, memorySizeOfBite, millisToMinutesAndSeconds,
+} from '../utils';
 import { influxdb } from '../metrics';
 import { setFileSize } from './setFileSize';
 import { IRecipeType } from '../interfaces/recipeTypes';
@@ -30,11 +32,11 @@ export const deleteAffiliates = async (): Promise<boolean> => {
     const query = `delete ${process.env.REDSHIFT_SCHEMA}.affiliates`;
     await client.query(query);
     client.release();
-    consola.info(`all records from table  ${process.env.REDSHIFT_SCHEMA}.affiliates was deleted`);
+    consola.info(`[AFFILIATES] All records from table  ${process.env.REDSHIFT_SCHEMA}.affiliates was deleted`);
     influxdb(200, 'delete_redshift_affiliates');
     return true;
   } catch (e: any) {
-    consola.error('deleteAffiliatesError:', e.toString());
+    consola.error('[AFFILIATES] deleteAffiliatesError:', e.toString());
     influxdb(500, 'delete_redshift_affiliates_error');
     return false;
   }
@@ -58,7 +60,7 @@ export const copyS3ToRedshift = async (destPath: string): Promise<boolean> => {
     return true;
   } catch (e) {
     influxdb(500, `copy_file_s3_affiliates_to_redshift_error_${computerName}`);
-    consola.error('copyS3ToRedshiftError:', e);
+    consola.error('[AFFILIATES] copyS3ToRedshiftError:', e);
     return false;
   }
 };
@@ -71,7 +73,7 @@ const uploadS3SetSize = async (sizeOfAffiliatesDB: number, count: number) => {
       const path = `${process.env.S3_AFFILIATES_RECIPE_PATH}`;
       const redshiftResponse = await copyS3ToRedshift(path);
       if (redshiftResponse) {
-        consola.info(`File ${path} added to redshift successfully count of records  { ${count} }`);
+        consola.info(`[AFFILIATES] File ${path} added to redshift successfully count of records  { ${count} }`);
         await setFileSize(IRecipeType.AFFILIATES, sizeOfAffiliatesDB);
       }
     }
@@ -81,10 +83,10 @@ const uploadS3SetSize = async (sizeOfAffiliatesDB: number, count: number) => {
 export const setAffiliatesRecipe = async () => {
   try {
     const startTime: number = new Date().getTime();
-    consola.info(`Start create { affiliates } recipe  for DB name - { ${process.env.DB_NAME} } DB port - { ${process.env.DB_PORT} }`);
+    consola.info(`[AFFILIATES] Start create { affiliates } recipe  for DB name - { ${process.env.DB_NAME} } DB port - { ${process.env.DB_PORT} }`);
     const affiliates: IAffiliate[] | undefined = await getAffiliates();
     if (!affiliates) {
-      consola.error('recipe affiliates created errors');
+      consola.error('[AFFILIATES] recipe affiliates created errors');
       influxdb(500, 'recipe_affiliates_created_error');
       return;
     }
@@ -100,28 +102,28 @@ export const setAffiliatesRecipe = async () => {
     const endTime: number = new Date().getTime();
     const speedTime: number = endTime - startTime;
 
-    consola.info(`Recalculate { affiliates } done speedTime: { ${speedTime}ms }  for DB name - { ${process.env.DB_NAME} } `);
+    consola.info(`[AFFILIATES] Recalculate { affiliates } done speedTime: { ${speedTime}ms } { ${millisToMinutesAndSeconds(speedTime)} time }  for DB name - { ${process.env.DB_NAME} } `);
     const sizeOfAffiliatesDB: number = memorySizeOfBite(affiliatesFormat);
     // consola.info(`Identify Size of Campaigns from DB Object:${sizeOfCampaignsDB} count: { ${campaignsFormat.length} }`)
     influxdb(200, `generate_recipe_affiliates_${computerName}`);
 
     const sizeOfAffiliatesRedis: number = await getFileSize(IRecipeType.AFFILIATES);
-    consola.info(`Identify Size of { Campaigns } Redis: { ${sizeOfAffiliatesRedis} } DB: { ${sizeOfAffiliatesDB} } count: { ${affiliatesFormat.length} }  for DB name - { ${process.env.DB_NAME} }`);
+    consola.info(`[AFFILIATES] Identify Size of { Affiliates } Redis: { ${sizeOfAffiliatesRedis} } DB: { ${sizeOfAffiliatesDB} } count: { ${affiliatesFormat.length} }  for DB name - { ${process.env.DB_NAME} }`);
 
     if (sizeOfAffiliatesDB === sizeOfAffiliatesRedis) {
-      consola.info(`Size of { Affiliates } in Redis the same like in DB :${sizeOfAffiliatesDB}, don't need create recipe  for DB name - { ${process.env.DB_NAME} } `);
+      consola.info(`[AFFILIATES] Size of { Affiliates } in Redis the same like in DB :${sizeOfAffiliatesDB}, don't need create recipe  for DB name - { ${process.env.DB_NAME} } `);
       return;
     }
-    consola.info(`Size of { Affiliates } from Redis and DB is different, lets create the recipe, sizeOfAffiliatesDB:${sizeOfAffiliatesDB}, sizeOfAffiliatesRedis:${sizeOfAffiliatesRedis}  for DB name - { ${process.env.DB_NAME} } `);
+    consola.info(`[AFFILIATES] Size of { Affiliates } from Redis and DB is different, lets create the recipe, sizeOfAffiliatesDB:${sizeOfAffiliatesDB}, sizeOfAffiliatesRedis:${sizeOfAffiliatesRedis}  for DB name - { ${process.env.DB_NAME} } `);
     const filePath: string = process.env.AFFILIATES_RECIPE_PATH || '';
     await appendToLocalFile(filePath, recordsReady);
     await compressFile(filePath!);
     await deleteFile(filePath!);
     influxdb(200, `recipe_affiliates_created_${computerName}`);
-    consola.success(`File Affiliates (count:${affiliates?.length}) created path:${filePath}  for DB name - { ${process.env.DB_NAME} }  `);
+    consola.success(`[AFFILIATES] File Affiliates (count:${affiliates?.length}) created path:${filePath}  for DB name - { ${process.env.DB_NAME} }  `);
     setTimeout(uploadS3SetSize, 2000, sizeOfAffiliatesDB, affiliates?.length);
   } catch (e) {
     influxdb(500, `recipe_affiliates_create_error_${computerName}`);
-    consola.error('create affiliates recipe Error:', e);
+    consola.error('[AFFILIATES] create affiliates recipe Error:', e);
   }
 };
