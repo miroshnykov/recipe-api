@@ -35,7 +35,7 @@ app.get('/api/v1/health', (req: Request, res: Response) => {
 // http://localhost:3001/encodeUrl?offerId=1111&campaignId=22222
 app.get('/encodeUrl', async (req: Request, res: Response) => {
   try {
-    if (!req.query.hash || req.query.hash !== process.env.GATEWAY_API_SECRET) {
+    if (!req.query.hash || req.query.hash !== process.env.ENCRIPTION_KEY) {
       throw Error('broken key');
     }
     const campaignId: number = Number(req.query.campaignId);
@@ -106,7 +106,7 @@ app.get('/bonusLid', async (req: Request, res: Response) => {
 // https://co-recipe.jatun.systems/files
 app.get('/files', async (req: Request, res: Response) => {
   try {
-    if (!req.query.hash || req.query.hash !== process.env.GATEWAY_API_SECRET) {
+    if (!req.query.hash || req.query.hash !== process.env.ENCRIPTION_KEY) {
       throw Error('broken key');
     }
 
@@ -129,7 +129,7 @@ app.get('/files', async (req: Request, res: Response) => {
 // https://recipe.aezai.com/fileSizeInfoRedis
 app.get('/fileSizeInfoRedis', async (req: Request, res: Response) => {
   try {
-    if (!req.query.hash || req.query.hash !== process.env.GATEWAY_API_SECRET) {
+    if (!req.query.hash || req.query.hash !== process.env.ENCRIPTION_KEY) {
       throw Error('broken key');
     }
     const fileSizeCampaignsRecipe: number = Number(await redis.get('campaignsSizeRecipe')) || 0;
@@ -217,10 +217,10 @@ app.get('/fileSizeInfoRedis', async (req: Request, res: Response) => {
 
 // http://localhost:3001/reCalculateAffiliates?hash=
 // https://recipe.aezai.com/reCalculateAffiliates
-// https://recipe.stage.aezai.com/reCalculateAffiliates
+// https://recipe.stage.aezai.com/reCalculateAffiliates?hash=
 app.get('/reCalculateAffiliates', async (req: Request, res: Response) => {
   try {
-    if (!req.query.hash || req.query.hash !== process.env.GATEWAY_API_SECRET) {
+    if (!req.query.hash || req.query.hash !== process.env.ENCRIPTION_KEY) {
       throw Error('broken key');
     }
     setTimeout(setAffiliatesRecipe, 2000);
