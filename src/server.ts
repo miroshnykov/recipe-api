@@ -321,7 +321,7 @@ setInterval(setOffersRecipe, intervalTimeOffer);
 
 if (process.env.APP_MODEL === AppModel.MASTER) {
   // PH-1156 sync table from mysql 'sfl_affiliates' to redshift table 'affiliates'
-  setInterval(setAffiliatesRecipe, 300000); //  300000 -> 5 min
+  setInterval(setAffiliatesRecipe, 540000); //  540000 -> 9 min
   setTimeout(setAffiliatesRecipe, 40000); // 40000 -> 40 sec
 }
 
