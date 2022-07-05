@@ -340,3 +340,14 @@ setInterval(() => {
 httpServer.listen(port, host, (): void => {
   consola.success(`server is running on http://${host}:${port} Using node - { ${process.version} } DB name - { ${process.env.DB_NAME} } DB port - { ${process.env.DB_PORT} }`);
 });
+
+process
+  .on('unhandledRejection', (reason, p) => {
+    consola.error(reason, 'Unhandled Rejection at Promise', p);
+    influxdb(500, 'unhandledRejection');
+  })
+  .on('uncaughtException', (err: Error) => {
+    consola.error(err, 'Uncaught Exception thrown');
+    influxdb(500, 'uncaughtException');
+    process.exit(1);
+  });
