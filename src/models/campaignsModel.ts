@@ -106,3 +106,21 @@ export const getCampaignCaps = async (id: number) => {
     return [];
   }
 };
+
+// eslint-disable-next-line consistent-return
+export const getCampaignsName = async () => {
+  try {
+    const conn: Pool = await connect();
+    const sql = `
+        SELECT c.id, c.name 
+        FROM sfl_offer_campaigns c
+    `;
+    const [campaignsName]: [any[], FieldPacket[]] = await conn.query(sql);
+    await conn.end();
+
+    return campaignsName;
+  } catch (e) {
+    consola.error('getCampaignsNameError:', e);
+    influxdb(500, 'get_campaigns_name_error');
+  }
+};

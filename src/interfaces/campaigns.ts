@@ -15,3 +15,8 @@ export interface ICampaign {
   affiliateManagerId: number
   targetRules?: object[]
 }
+
+export interface ICampaignsName {
+  id: number,
+  name: string
+}

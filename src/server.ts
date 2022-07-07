@@ -12,14 +12,16 @@ import { setOffersRecipe } from './crons/offersRecipe';
 import { redis } from './redis';
 import { setCampaignsRecipe } from './crons/campaignsRecipe';
 import {
-  encrypt, decrypt, getLocalFiles, getFileSize,
+  encrypt, getLocalFiles, getFileSize,
 } from './utils';
 import { sqsProcess } from './sqs';
 
 import { influxdb, sendMetricsSystem } from './metrics';
 import { ISqsMessage } from './interfaces/sqsMessage';
 import { AppModel } from './interfaces/recipeTypes';
-import { setAffiliatesRecipe } from './crons/affiliatesRecipe';
+import { syncAffiliates } from './crons/syncToRedshift/affiliates';
+import { syncOffers } from './crons/syncToRedshift/offers';
+import { syncCampaigns } from './crons/syncToRedshift/campaigns';
 
 const app: Application = express();
 const httpServer = createServer(app);
@@ -215,18 +217,60 @@ app.get('/fileSizeInfoRedis', async (req: Request, res: Response) => {
 //   }
 // });
 
-// http://localhost:3001/reCalculateAffiliates?hash=
-// https://recipe.aezai.com/reCalculateAffiliates
-// https://recipe.stage.aezai.com/reCalculateAffiliates?hash=
-app.get('/reCalculateAffiliates', async (req: Request, res: Response) => {
+// http://localhost:3001/syncAffiliates?hash=
+// https://recipe.aezai.com/syncAffiliates
+// https://recipe.stage.aezai.com/syncAffiliates?hash=
+app.get('/syncAffiliates', async (req: Request, res: Response) => {
   try {
     if (!req.query.hash || req.query.hash !== process.env.ENCRIPTION_KEY) {
       throw Error('broken key');
     }
-    setTimeout(setAffiliatesRecipe, 2000);
+    setTimeout(syncAffiliates, 2000);
 
     res.json({
       response: 'setAffiliatesRecipe to sqs',
+    });
+  } catch (e: any) {
+    res.json({
+      success: false,
+      info: e.toString(),
+    });
+  }
+});
+
+// http://localhost:3001/syncOffers?hash=
+// https://recipe.aezai.com/syncOffers
+// https://recipe.stage.aezai.com/syncOffers?hash=
+app.get('/syncOffers', async (req: Request, res: Response) => {
+  try {
+    if (!req.query.hash || req.query.hash !== process.env.ENCRIPTION_KEY) {
+      throw Error('broken key');
+    }
+    setTimeout(syncOffers, 2000);
+
+    res.json({
+      response: 'syncOffers to sqs',
+    });
+  } catch (e: any) {
+    res.json({
+      success: false,
+      info: e.toString(),
+    });
+  }
+});
+
+// http://localhost:3001/syncCampaigns?hash=
+// https://recipe.aezai.com/syncCampaigns
+// https://recipe.stage.aezai.com/syncCampaigns?hash=
+app.get('/syncCampaigns', async (req: Request, res: Response) => {
+  try {
+    if (!req.query.hash || req.query.hash !== process.env.ENCRIPTION_KEY) {
+      throw Error('broken key');
+    }
+    setTimeout(syncCampaigns, 2000);
+
+    res.json({
+      response: 'syncCampaigns to sqs',
     });
   } catch (e: any) {
     res.json({
@@ -321,8 +365,16 @@ setInterval(setOffersRecipe, intervalTimeOffer);
 
 if (process.env.APP_MODEL === AppModel.MASTER) {
   // PH-1156 sync table from mysql 'sfl_affiliates' to redshift table 'affiliates'
-  setInterval(setAffiliatesRecipe, 540000); //  540000 -> 9 min
-  setTimeout(setAffiliatesRecipe, 40000); // 40000 -> 40 sec
+  setInterval(syncAffiliates, 540000); //  540000 -> 9 min
+  setTimeout(syncAffiliates, 40000); // 40000 -> 40 sec
+
+  // PH-1179 sync table from mysql 'sfl_offers' to redshift table 'offers'
+  setInterval(syncOffers, 600000); //  600000 -> 10 min
+  setTimeout(syncOffers, 60000); // 60000 -> 60 sec
+
+  // PH-1179 sync table from mysql 'sfl_offer_campaigns' to redshift table 'campaigns'
+  setInterval(syncCampaigns, 660000); //  660000 -> 11 min
+  setTimeout(syncCampaigns, 70000); // 70000 -> 70 sec
 }
 
 setTimeout(setCampaignsRecipe, 30000); // 30000 -> 30 sec
