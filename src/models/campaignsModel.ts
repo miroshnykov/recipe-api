@@ -50,6 +50,7 @@ export const getCampaign = async (id: number) => {
                a.status               AS affiliateStatus,
                c.status               AS campaignStatus,
                a.affiliate_manager_id AS affiliateManagerId,
+               a.affiliate_type       AS affiliateType,
                cap.enabled            AS capsEnabled
         FROM sfl_offer_campaigns c
                  LEFT JOIN sfl_affiliates a ON a.id = c.affiliate_id
@@ -103,5 +104,23 @@ export const getCampaignCaps = async (id: number) => {
     consola.error('getCampaignCapsError:', e);
     influxdb(500, 'get_campaign_caps_error');
     return [];
+  }
+};
+
+// eslint-disable-next-line consistent-return
+export const getCampaignsName = async () => {
+  try {
+    const conn: Pool = await connect();
+    const sql = `
+        SELECT c.id, c.name 
+        FROM sfl_offer_campaigns c
+    `;
+    const [campaignsName]: [any[], FieldPacket[]] = await conn.query(sql);
+    await conn.end();
+
+    return campaignsName;
+  } catch (e) {
+    consola.error('getCampaignsNameError:', e);
+    influxdb(500, 'get_campaigns_name_error');
   }
 };

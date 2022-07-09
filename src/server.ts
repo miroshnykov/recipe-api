@@ -12,20 +12,16 @@ import { setOffersRecipe } from './crons/offersRecipe';
 import { redis } from './redis';
 import { setCampaignsRecipe } from './crons/campaignsRecipe';
 import {
-  encrypt, decrypt, getLocalFiles, getFileSize,
+  encrypt, getLocalFiles, getFileSize,
 } from './utils';
 import { sqsProcess } from './sqs';
 
 import { influxdb, sendMetricsSystem } from './metrics';
-import { ICampaign } from './interfaces/campaigns';
-import { getCampaigns } from './models/campaignsModel';
-import { reCalculateCampaignCaps } from './services/campaignsCaps';
-import { reCalculateOffer, reCalculateOfferCaps } from './services/offersReCalculations';
 import { ISqsMessage } from './interfaces/sqsMessage';
-import { testLinksCampaigns, testLinksOffers } from './tests/links';
-import { IOffer } from './interfaces/offers';
-import { getOffer } from './models/offersModel';
 import { AppModel } from './interfaces/recipeTypes';
+import { syncAffiliates } from './crons/syncToRedshift/affiliates';
+import { syncOffers } from './crons/syncToRedshift/offers';
+import { syncCampaigns } from './crons/syncToRedshift/campaigns';
 
 const app: Application = express();
 const httpServer = createServer(app);
@@ -41,6 +37,9 @@ app.get('/api/v1/health', (req: Request, res: Response) => {
 // http://localhost:3001/encodeUrl?offerId=1111&campaignId=22222
 app.get('/encodeUrl', async (req: Request, res: Response) => {
   try {
+    if (!req.query.hash || req.query.hash !== process.env.ENCRIPTION_KEY) {
+      throw Error('broken key');
+    }
     const campaignId: number = Number(req.query.campaignId);
     const offerId = Number(req.query.offerId);
 
@@ -56,9 +55,12 @@ app.get('/encodeUrl', async (req: Request, res: Response) => {
       encryptData,
     };
     res.json(response);
-  } catch (e) {
+  } catch (e: any) {
     consola.error(e);
-    res.json({ err: e });
+    res.json({
+      success: false,
+      info: e.toString(),
+    });
   }
 });
 
@@ -83,29 +85,33 @@ app.get('/bonusLid', async (req: Request, res: Response) => {
   }
 });
 
-// http://localhost:3001/decodeUrl?code=
-app.get('/decodeUrl', async (req: Request, res: Response) => {
-  interface DecodedObj {
-    offerId: number
-    campaignId: number
-  }
-
-  try {
-    const code: string = String(req.query.code);
-    const decodedString: string = decrypt(code);
-    const formatCode: DecodedObj = JSON.parse(decodedString!);
-
-    res.json(formatCode);
-  } catch (e) {
-    consola.error(e);
-    res.json({ err: e });
-  }
-});
+// // http://localhost:3001/decodeUrl?code=
+// app.get('/decodeUrl', async (req: Request, res: Response) => {
+//   interface DecodedObj {
+//     offerId: number
+//     campaignId: number
+//   }
+//
+//   try {
+//     const code: string = String(req.query.code);
+//     const decodedString: string = decrypt(code);
+//     const formatCode: DecodedObj = JSON.parse(decodedString!);
+//
+//     res.json(formatCode);
+//   } catch (e) {
+//     consola.error(e);
+//     res.json({ err: e });
+//   }
+// });
 
 // http://localhost:3001/files
 // https://co-recipe.jatun.systems/files
 app.get('/files', async (req: Request, res: Response) => {
   try {
+    if (!req.query.hash || req.query.hash !== process.env.ENCRIPTION_KEY) {
+      throw Error('broken key');
+    }
+
     const files = await getLocalFiles('/tmp/co-recipe');
     const filesFormat: any = [];
     await Promise.all(files.map(async (file) => {
@@ -120,11 +126,14 @@ app.get('/files', async (req: Request, res: Response) => {
   }
 });
 
-// http://localhost:3001/fileSizeInfoRedis
+// http://localhost:3001/fileSizeInfoRedis?hash=
 // https://co-recipe.jatun.systems/fileSizeInfoRedis
 // https://recipe.aezai.com/fileSizeInfoRedis
 app.get('/fileSizeInfoRedis', async (req: Request, res: Response) => {
   try {
+    if (!req.query.hash || req.query.hash !== process.env.ENCRIPTION_KEY) {
+      throw Error('broken key');
+    }
     const fileSizeCampaignsRecipe: number = Number(await redis.get('campaignsSizeRecipe')) || 0;
     const fileSizeOffersRecipe: number = Number(await redis.get('offersSizeRecipe')) || 0;
 
@@ -132,76 +141,142 @@ app.get('/fileSizeInfoRedis', async (req: Request, res: Response) => {
       fileSizeCampaignsRecipe,
       fileSizeOffersRecipe,
     });
-  } catch (e) {
-    res.json({ err: e });
-  }
-});
-
-app.get('/caps', async (req: Request, res: Response) => {
-  try {
-    // let offers:IOffer[] = await getOffers()||[]
-    const caps = await reCalculateOfferCaps(36818);
-    // let caps = await reCalculateOfferCaps(35899)
-    // let offer = await getOffer(19)
+  } catch (e: any) {
     res.json({
-      caps,
+      success: false,
+      info: e.toString(),
     });
-  } catch (e) {
-    res.json({ err: e });
   }
 });
 
-app.get('/capsCampaigns', async (req: Request, res: Response) => {
-  try {
-    const campaigns: ICampaign[] | undefined = await getCampaigns();
-    if (!campaigns) {
-      consola.error('recipe_campaigns_created_error');
-      return;
-    }
+// app.get('/caps', async (req: Request, res: Response) => {
+//   try {
+//     // let offers:IOffer[] = await getOffers()||[]
+//     const caps = await reCalculateOfferCaps(36818);
+//     // let caps = await reCalculateOfferCaps(35899)
+//     // let offer = await getOffer(19)
+//     res.json({
+//       caps,
+//     });
+//   } catch (e) {
+//     res.json({ err: e });
+//   }
+// });
 
-    const campaignsFormat: any = [];
-    await Promise.all(campaigns.map(async (campaign) => {
-      if (campaign.capsEnabled) {
-        const reCalcCampaign = await reCalculateCampaignCaps(campaign.campaignId);
-        campaignsFormat.push(reCalcCampaign);
-      } else {
-        campaignsFormat.push(campaign);
-      }
-    }));
-
-    res.json({
-      campaignsFormat,
-    });
-  } catch (e) {
-    res.json({ err: e });
-  }
-});
+// app.get('/capsCampaigns', async (req: Request, res: Response) => {
+//   try {
+//     const campaigns: ICampaign[] | undefined = await getCampaigns();
+//     if (!campaigns) {
+//       consola.error('recipe_campaigns_created_error');
+//       return;
+//     }
+//
+//     const campaignsFormat: any = [];
+//     await Promise.all(campaigns.map(async (campaign) => {
+//       if (campaign.capsEnabled) {
+//         const reCalcCampaign = await reCalculateCampaignCaps(campaign.campaignId);
+//         campaignsFormat.push(reCalcCampaign);
+//       } else {
+//         campaignsFormat.push(campaign);
+//       }
+//     }));
+//
+//     res.json({
+//       campaignsFormat,
+//     });
+//   } catch (e) {
+//     res.json({ err: e });
+//   }
+// });
 
 // https://recipe.aezai.com/link
-app.get('/link', async (req: Request, res: Response) => {
+// app.get('/link', async (req: Request, res: Response) => {
+//   try {
+//     setTimeout(testLinksOffers, 10000); // 10000 -> 10s
+//     setTimeout(testLinksCampaigns, 20000); // 20000 -> 20s
+//     res.json('added to queue testLinksOffers  testLinksCampaigns');
+//   } catch (e) {
+//     res.json({ err: e });
+//   }
+// });
+
+// app.get('/reCalculateOffer', async (req: Request, res: Response) => {
+//   try {
+//     // reqular 36816
+//     // aggregated  36817
+//     // caps  36815
+//     const offerId = 36817;
+//     const offer: IOffer = await getOffer(offerId);
+//     const reCalcOfferRes = await reCalculateOffer(offer);
+//
+//     res.json({
+//       reCalcOfferRes,
+//     });
+//   } catch (e) {
+//     res.json({ err: e });
+//   }
+// });
+
+// http://localhost:3001/syncAffiliates?hash=
+// https://recipe.aezai.com/syncAffiliates
+// https://recipe.stage.aezai.com/syncAffiliates?hash=
+app.get('/syncAffiliates', async (req: Request, res: Response) => {
   try {
-    setTimeout(testLinksOffers, 10000); // 10000 -> 10s
-    setTimeout(testLinksCampaigns, 20000); // 20000 -> 20s
-    res.json('added to queue testLinksOffers  testLinksCampaigns');
-  } catch (e) {
-    res.json({ err: e });
+    if (!req.query.hash || req.query.hash !== process.env.ENCRIPTION_KEY) {
+      throw Error('broken key');
+    }
+    setTimeout(syncAffiliates, 2000);
+
+    res.json({
+      response: 'setAffiliatesRecipe to sqs',
+    });
+  } catch (e: any) {
+    res.json({
+      success: false,
+      info: e.toString(),
+    });
   }
 });
 
-app.get('/reCalculateOffer', async (req: Request, res: Response) => {
+// http://localhost:3001/syncOffers?hash=
+// https://recipe.aezai.com/syncOffers
+// https://recipe.stage.aezai.com/syncOffers?hash=
+app.get('/syncOffers', async (req: Request, res: Response) => {
   try {
-    // reqular 36816
-    // aggregated  36817
-    // caps  36815
-    const offerId = 36817;
-    const offer: IOffer = await getOffer(offerId);
-    const reCalcOfferRes = await reCalculateOffer(offer);
+    if (!req.query.hash || req.query.hash !== process.env.ENCRIPTION_KEY) {
+      throw Error('broken key');
+    }
+    setTimeout(syncOffers, 2000);
 
     res.json({
-      reCalcOfferRes,
+      response: 'syncOffers to sqs',
     });
-  } catch (e) {
-    res.json({ err: e });
+  } catch (e: any) {
+    res.json({
+      success: false,
+      info: e.toString(),
+    });
+  }
+});
+
+// http://localhost:3001/syncCampaigns?hash=
+// https://recipe.aezai.com/syncCampaigns
+// https://recipe.stage.aezai.com/syncCampaigns?hash=
+app.get('/syncCampaigns', async (req: Request, res: Response) => {
+  try {
+    if (!req.query.hash || req.query.hash !== process.env.ENCRIPTION_KEY) {
+      throw Error('broken key');
+    }
+    setTimeout(syncCampaigns, 2000);
+
+    res.json({
+      response: 'syncCampaigns to sqs',
+    });
+  } catch (e: any) {
+    res.json({
+      success: false,
+      info: e.toString(),
+    });
   }
 });
 
@@ -214,17 +289,17 @@ io.on('connection', (socket: Socket) => {
 
       if (!fileSizeOffersRecipe) {
         influxdb(500, 'file_size_redis_empty_offers');
-        consola.info(`fileSizeOffersRecipe:${fileSizeOffersRecipe} not set up yet, dont need to send to co-traffic empty size for DB name - { ${process.env.DB_NAME} } `);
+        consola.info(`[OFFERS] FileSizeOffersRecipe:${fileSizeOffersRecipe} not set up yet, dont need to send to co-traffic empty size for DB name - { ${process.env.DB_NAME} } `);
         return;
       }
       if (fileSizeOffersCheck !== fileSizeOffersRecipe) {
-        consola.warn(`fileSize offer is different, fileSizeOffersCoTraffic:${fileSizeOffersCheck}, fileSizeOffersRecipe:${fileSizeOffersRecipe}  for DB name - { ${process.env.DB_NAME} }  `);
+        consola.warn(`[OFFERS] fileSize offer is different, fileSizeOffersCoTraffic:${fileSizeOffersCheck}, fileSizeOffersRecipe:${fileSizeOffersRecipe}  for DB name - { ${process.env.DB_NAME} }  `);
         influxdb(200, 'file_size_changed_offers');
         io.to(socket.id).emit('fileSizeOffersCheck', fileSizeOffersRecipe);
       }
     } catch (e) {
       influxdb(500, 'file_size_offers_check_error');
-      consola.error('fileSizeOffersCheckError:', e);
+      consola.error('[OFFERS] fileSizeOffersCheckError:', e);
     }
   });
 
@@ -233,18 +308,18 @@ io.on('connection', (socket: Socket) => {
       const fileSizeCampaignsRecipe: number = Number(await redis.get('campaignsSizeRecipe'));
       if (!fileSizeCampaignsRecipe) {
         influxdb(500, 'file_size_redis_empty_campaign');
-        consola.info(`fileSizeCampaignsRecipe:${fileSizeCampaignsRecipe} not set up yet, dont need to send to co-traffic empty size  for DB name - { ${process.env.DB_NAME} } `);
+        consola.info(`[CAMPAIGNS] FileSizeCampaignsRecipe:${fileSizeCampaignsRecipe} not set up yet, dont need to send to co-traffic empty size  for DB name - { ${process.env.DB_NAME} } `);
         return;
       }
 
       if (fileSizeCampaignsCheck !== fileSizeCampaignsRecipe) {
-        consola.warn(`fileSize campaigns is different, fileSizeCampaignsCoTraffic:${fileSizeCampaignsCheck}, fileSizeCampaignsRecipe:${fileSizeCampaignsRecipe}  for DB name - { ${process.env.DB_NAME} } `);
+        consola.warn(`[CAMPAIGNS] fileSize campaigns is different, fileSizeCampaignsCoTraffic:${fileSizeCampaignsCheck}, fileSizeCampaignsRecipe:${fileSizeCampaignsRecipe}  for DB name - { ${process.env.DB_NAME} } `);
         influxdb(200, 'file_size_changed_campaigns');
         io.to(socket.id).emit('fileSizeCampaignsCheck', fileSizeCampaignsRecipe);
       }
     } catch (e) {
       influxdb(500, 'file_size_campaigns_check_error');
-      consola.error('fileSizeCampaignsCheckError:', e);
+      consola.error('[CAMPAIGNS] fileSizeCampaignsCheckError:', e);
     }
   });
   const updRedis: any = [];
@@ -271,10 +346,12 @@ io.on('connection', (socket: Socket) => {
   socket.on('disconnect', () => {
     clearInterval(updRedis[socket.id]);
     consola.warn(`client disconnected ID:${socket.id}`);
+    influxdb(500, `disconnect_traffic_api_${process.env.APP_MODEL}`);
   });
 });
 
 io.on('connect', async (socket: Socket) => {
+  influxdb(200, `connect_traffic_api_${process.env.APP_MODEL}`);
   consola.success('connect id', socket.id);
 });
 
@@ -286,6 +363,20 @@ setInterval(setCampaignsRecipe, intervalTimeCampaign);
 const intervalTimeOffer = process.env.APP_MODEL === AppModel.MASTER ? 420000 : 480000;
 setInterval(setOffersRecipe, intervalTimeOffer);
 
+if (process.env.APP_MODEL === AppModel.MASTER) {
+  // PH-1156 sync table from mysql 'sfl_affiliates' to redshift table 'affiliates'
+  setInterval(syncAffiliates, 540000); //  540000 -> 9 min
+  setTimeout(syncAffiliates, 40000); // 40000 -> 40 sec
+
+  // PH-1179 sync table from mysql 'sfl_offers' to redshift table 'offers'
+  setInterval(syncOffers, 600000); //  600000 -> 10 min
+  setTimeout(syncOffers, 60000); // 60000 -> 60 sec
+
+  // PH-1179 sync table from mysql 'sfl_offer_campaigns' to redshift table 'campaigns'
+  setInterval(syncCampaigns, 660000); //  660000 -> 11 min
+  setTimeout(syncCampaigns, 70000); // 70000 -> 70 sec
+}
+
 setTimeout(setCampaignsRecipe, 30000); // 30000 -> 30 sec
 setTimeout(setOffersRecipe, 10000); // 10000 -> 10 sec
 
@@ -294,9 +385,21 @@ setInterval(() => {
   sendMetricsSystem();
 }, 30000);
 
+// consola.warn('process.env:', process.env);
 // setInterval(testLinksOffers, 28800000) // 28800000 -> 8h
 // setInterval(testLinksCampaigns, 25200000) // 25200000 -> 7h
 
 httpServer.listen(port, host, (): void => {
   consola.success(`server is running on http://${host}:${port} Using node - { ${process.version} } DB name - { ${process.env.DB_NAME} } DB port - { ${process.env.DB_PORT} }`);
 });
+
+process
+  .on('unhandledRejection', (reason, p) => {
+    consola.error(reason, 'Unhandled Rejection at Promise', p);
+    influxdb(500, 'unhandledRejection');
+  })
+  .on('uncaughtException', (err: Error) => {
+    consola.error(err, 'Uncaught Exception thrown');
+    influxdb(500, 'uncaughtException');
+    process.exit(1);
+  });

@@ -5,6 +5,7 @@ export interface ICampaign {
   name: string
   offerId: number
   affiliateId: number
+  affiliateType: string
   campaignStatus: string
   capsEnabled: boolean | null
   capSetup: boolean
@@ -13,4 +14,9 @@ export interface ICampaign {
   payoutPercent: number | null
   affiliateManagerId: number
   targetRules?: object[]
+}
+
+export interface ICampaignsName {
+  id: number,
+  name: string
 }

@@ -68,4 +68,8 @@ export enum IOfferStatus {
   PENDING = 'pending',
 }
 
+export interface IOffersName {
+  id: number,
+  name: string
+}
 export const EXIT_OFFERS_NESTED_LIMIT = 5;

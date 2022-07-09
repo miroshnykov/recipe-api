@@ -5,7 +5,7 @@ import { influxdb } from '../metrics';
 
 export const setFileSize = async (type: IRecipeType, sizeDB: number) => {
   try {
-    consola.info(`set ${type}Size:${sizeDB} to Redis`);
+    consola.info(`[${type.toUpperCase()}] setFileSize ${type}Size { ${sizeDB} } to Redis`);
     influxdb(200, `set_file_size_redis_${type}_${sizeDB}`);
     await redis.set(`${type}SizeRecipe`, sizeDB!);
   } catch (e) {

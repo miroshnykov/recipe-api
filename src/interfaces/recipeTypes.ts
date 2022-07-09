@@ -1,6 +1,15 @@
 export enum IRecipeType {
   CAMPAIGNS = 'campaigns',
   OFFERS = 'offers',
+  AFFILIATES = 'affiliates',
+  OFFERS_NAME = 'offersName',
+  CAMPAIGNS_NAME = 'campaignsName',
+}
+
+export enum IRedshiftTables {
+  OFFERS = 'offers',
+  AFFILIATES = 'affiliates',
+  CAMPAIGNS = 'campaigns',
 }
 
 export enum AppModel {

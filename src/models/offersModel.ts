@@ -64,6 +64,26 @@ export const getOffers = async () => {
 };
 
 // eslint-disable-next-line consistent-return
+export const getOffersName = async () => {
+  try {
+    const conn: Pool = await connect();
+    const sql = `
+        SELECT 
+            o.id, o.name 
+        FROM sfl_offers o 
+        WHERE o.deleted_at IS  null
+    `;
+    const [offersName]: [any[], FieldPacket[]] = await conn.query(sql);
+    await conn.end();
+
+    return offersName;
+  } catch (e) {
+    consola.error('getOffersNameError:', e);
+    influxdb(500, 'get_offers_name_error');
+  }
+};
+
+// eslint-disable-next-line consistent-return
 export const findAggregatedOffer = async (offerId: number) => {
   try {
     const conn: Pool = await connect();
